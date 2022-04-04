@@ -1,0 +1,6 @@
+﻿
+
+<View Style='@ new(){ BackgroundColor = "red", FlexDirection=FlexDirection.Column }'>
+	<Text>{State.Name}</Text>
+	<Text>{State.LastName}</Text>
+</View>
