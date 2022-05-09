@@ -2,7 +2,7 @@
 
 namespace CSX.Components
 {
-    public interface IComponent
+    public interface IComponent : Microsoft.AspNetCore.Components.IComponent
     {
         Guid DOMElement { get; }
         public void Initialize(IDOM dom);
@@ -11,7 +11,7 @@ namespace CSX.Components
         public Props Props { get; }
         public void SetProps(object props);
         public void SetChildren(IEnumerable<IComponent> children);
-        public void OnRender(Action action);
+        public void OnRender(Action? action);
         void RenderView(IDOM dom);
         void SetServiceProvider(IServiceProvider serviceProvider);
     }

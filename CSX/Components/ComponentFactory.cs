@@ -14,9 +14,18 @@ namespace CSX.Components
             dom.AppendChild(dom.GetRootElement(), component.DOMElement);
         }
 
+        public static void AppendToDomIfNotAppended(this IDOM dom, IComponent component)
+        {
+            if (!dom.HasChild(dom.GetRootElement(), component.DOMElement))
+            {
+                dom.AppendChild(dom.GetRootElement(), component.DOMElement);
+            }            
+        }
+
         public static void SetAttributeIfDifferent(this IDOM dom, Guid element, string name, string? value)
         {
-            if (dom.GetAttribute(element, name) != value)
+            var domValue = dom.GetAttribute(element, name);
+            if (domValue != value)
             {
                 dom.SetAttribute(element, name, value);
             }
@@ -30,38 +39,38 @@ namespace CSX.Components
             }
         }
 
-        public static VirtualComponent CreateElement<T, TProps>(TProps props, IEnumerable<VirtualComponent> children) where T : IComponent<TProps>
+        public static Element CreateElement<T, TProps>(TProps props, IEnumerable<Element> children) where T : IComponent<TProps>
                                                                                                                       where TProps : Props
             => CreateElement(typeof(T), props, children);
         
-        public static VirtualComponent CreateElement(Type type, Props props, IEnumerable<VirtualComponent> children)
+        public static Element CreateElement(Type type, Props props, IEnumerable<Element> children)
         {
-            return new VirtualComponent(type, props, children.ToArray());
+            return new Element(type, props, children.ToArray());
         }
 
-        public static VirtualComponent UpdateTree(VirtualComponent? current, VirtualComponent @new, IServiceProvider serviceProvider, IDOM dom)
+        public static Element UpdateTree(Element? current, Element @new, IServiceProvider serviceProvider, IDOM dom, Action? onRender)
         {
             if (current == null)
             {
-                CreateComponent(@new, serviceProvider, dom);
+                CreateComponent(@new, serviceProvider, dom, onRender);
                 return @new;
             }
 
             if (current.Type != @new.Type)
             {
                 DestroyComponent(current, dom);
-                CreateComponent(@new, serviceProvider, dom);
+                CreateComponent(@new, serviceProvider, dom, onRender);
                 return @new;
             }           
 
             var currentNoKeys = current.Children.Where(c => string.IsNullOrEmpty(c.Props.Key)).ToArray();
             var newNoKeys = @new.Children.Where(c => string.IsNullOrEmpty(c.Props.Key)).ToArray();
 
-            for (int i = 0; i < @new.Children.Length; i++)
+            for (int i = 0; i < newNoKeys.Length; i++)
             {
-                var currentChild = currentNoKeys[i];
+                var currentChild = currentNoKeys.Length > i ? currentNoKeys[i] : null;
                 var newChild = newNoKeys[i];
-                UpdateTree(currentChild, newChild, serviceProvider, dom);
+                UpdateTree(currentChild, newChild, serviceProvider, dom, onRender);
             }
             
             var currentWithKeys = current.Children.Where(x => !string.IsNullOrEmpty(x.Props.Key)).ToDictionary(x => x.Props.Key ?? throw new Exception("Key cannot be null"), x => x);
@@ -71,22 +80,30 @@ namespace CSX.Components
             {
                 var currentChild = currentWithKeys.GetValueOrDefault(key);
                 var newChild = newWithKeys[key];
-                UpdateTree(currentChild, newChild, serviceProvider, dom);
+                UpdateTree(currentChild, newChild, serviceProvider, dom, onRender);
+            }
+
+            // Destroy removed children
+            var newChildrenComponents = @new.Children.Select(x => x.Component ?? throw new InvalidOperationException("Could not update component")).ToArray();
+            var removedChildren = current.Children.Where(x => !newChildrenComponents.Contains(x.Component));
+            foreach (var child in removedChildren)
+            {
+                DestroyComponent(child, dom);
             }
 
             var component = current.Component ?? throw new InvalidOperationException("Could not update component");            
             component.SetProps(@new.Props);
-            component.SetChildren(@new.Children.Select(x => x.Component ?? throw new InvalidOperationException("Could not update component")));
+            component.SetChildren(newChildrenComponents);
             @new.Component = component;
 
             return @new;
         }
 
-        public static void CreateComponent(VirtualComponent virtualComponent, IServiceProvider serviceProvider, IDOM dom)
+        public static void CreateComponent(Element virtualComponent, IServiceProvider serviceProvider, IDOM dom, Action? onRender)
         {
             foreach (var child in virtualComponent.Children)
             {
-                CreateComponent(child, serviceProvider, dom);
+                CreateComponent(child, serviceProvider, dom, onRender);
             }
 
             // construct component
@@ -96,10 +113,11 @@ namespace CSX.Components
             component.SetProps(virtualComponent.Props);
             component.SetChildren(virtualComponent.Children.Select(x => x.Component ?? throw new Exception("Could not create component")));
             component.Initialize(dom);
+            component.OnRender(onRender);
             virtualComponent.Component = component;
         }
 
-        public static void DestroyComponent(VirtualComponent component, IDOM dom)
+        public static void DestroyComponent(Element component, IDOM dom)
         {
             foreach (var child in component.Children)
             {

@@ -5,7 +5,11 @@ VisualStudioVersion = 17.1.32104.313
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSX", "CSX\CSX.csproj", "{A801979E-C414-4CCF-BDAC-0C7E008E3F7F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSX.Lab", "CSX.Lab\CSX.Lab.csproj", "{F394BD5C-1829-4D18-B37F-A42218DB26A8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSX.Lab", "CSX.Lab\CSX.Lab.csproj", "{F394BD5C-1829-4D18-B37F-A42218DB26A8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSXS", "CSXS\CSXS.csproj", "{728762B8-90BD-452A-AAA4-9D704F2EA13A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorApp1", "BlazorApp1\BlazorApp1.csproj", "{EE36895B-8DAF-4D0F-8208-DAEC90474693}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,14 @@ Global
 		{F394BD5C-1829-4D18-B37F-A42218DB26A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F394BD5C-1829-4D18-B37F-A42218DB26A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F394BD5C-1829-4D18-B37F-A42218DB26A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{728762B8-90BD-452A-AAA4-9D704F2EA13A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{728762B8-90BD-452A-AAA4-9D704F2EA13A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{728762B8-90BD-452A-AAA4-9D704F2EA13A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{728762B8-90BD-452A-AAA4-9D704F2EA13A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE36895B-8DAF-4D0F-8208-DAEC90474693}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE36895B-8DAF-4D0F-8208-DAEC90474693}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE36895B-8DAF-4D0F-8208-DAEC90474693}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE36895B-8DAF-4D0F-8208-DAEC90474693}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

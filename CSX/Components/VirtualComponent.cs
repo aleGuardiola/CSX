@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace CSX.Components
 {
-    public class VirtualComponent
+    public class Element
     {
         public Type Type { get; }
         public Props Props { get; }
-        public VirtualComponent[] Children { get; }
+        public Element[] Children { get; }
         public IComponent? Component { get; set; }
-        public VirtualComponent(Type type, Props props, VirtualComponent[] children)
+        public Element(Type type, Props props, Element[] children)
         {
             Type = type;
             Props = props;

@@ -3,6 +3,15 @@ using CSX.Rendering;
 
 namespace CSX.Components
 {
+    public record EmptyState();
+    public abstract class Component<TProps> : Component<EmptyState, TProps> where TProps : Props
+    {
+        protected override EmptyState OnInitialize()
+        {
+            return new();
+        }
+    }
+
     public abstract class Component<TState, TProps> : EventDispatcherHandler, IComponent<TProps> where TState : IEquatable<TState>
                                                                                                  where TProps : Props
     {
@@ -23,7 +32,7 @@ namespace CSX.Components
         public IReadOnlyCollection<IComponent> Children => _children;
         public Guid DOMElement => RootComponent?.Component?.DOMElement ?? throw new InvalidOperationException("Component has not been initialized");
 
-        VirtualComponent? RootComponent;
+        Element? RootComponent;
 
         public void SetProps(TProps props)
         {            
@@ -89,7 +98,7 @@ namespace CSX.Components
         public void NotifyAndRender()
         {
             var virtualDom = Render();
-            RootComponent = ComponentFactory.UpdateTree(RootComponent, virtualDom, _serviceProvider ?? throw new Exception(), _dom ?? throw new Exception());
+            RootComponent = ComponentFactory.UpdateTree(RootComponent, virtualDom, _serviceProvider ?? throw new Exception(), _dom ?? throw new Exception(), _onRenderHandler);
 
             _onRenderHandler?.Invoke();
         }
@@ -113,6 +122,21 @@ namespace CSX.Components
 
         protected virtual void OnDestroy() { }        
         protected abstract TState OnInitialize();
-        protected virtual VirtualComponent Render() { throw new NotImplementedException(); }
+        
+        protected virtual Element Render() 
+        {
+            
+            throw new NotImplementedException();
+        }
+        
+        public void Attach(Microsoft.AspNetCore.Components.RenderHandle renderHandle)
+        {           
+            throw new NotImplementedException();
+        }
+
+        public Task SetParametersAsync(Microsoft.AspNetCore.Components.ParameterView parameters)
+        {            
+            throw new NotImplementedException();
+        }
     }
 }

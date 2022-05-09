@@ -8,10 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="6.0.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CSXS\CSXS.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	  
     <ProjectReference Include="..\CSX\CSX.csproj" />
   </ItemGroup>
 

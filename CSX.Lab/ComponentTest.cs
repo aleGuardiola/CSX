@@ -1,27 +1,27 @@
 ﻿using CSX.Components;
-using CSX.Compilation;
+using static CSX.Lab.ComponentFunctions;
 
-namespace CSX.Lab
+namespace CSX.Lab;
+
+public record TestProps : Props
 {
-    public record TestProps : Props
-    {
-
-    }  
-    public partial class ComponentTest : Component<ComponentTest.CState, TestProps>
-    {
-        public record CState(
-            string? Name,
-            string? LastName
-            );
-
-        protected override CState OnInitialize()
-        {
-            return new(
-                Name: "Alejandro",
-                LastName: "Guardiola"
-                );
-        }
-
-
-    }
+    public string? Name { get; init; }
+    public string? LastName { get; init; }
 }
+public partial class ComponentTest : Component<TestProps>
+{
+    protected override Element Render()
+    {
+        return         
+        View(new() { Style = new() { BackgroundColor = "f00" } }, new[]
+        {
+            Text(new() {  }, new[] {
+                String(Props.Name ?? "")
+            })
+        });
+    }
+
+
+}
+
+

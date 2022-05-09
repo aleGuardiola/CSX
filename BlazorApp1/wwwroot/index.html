@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>BlazorApp1</title>
+    <base href="/" />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="BlazorApp1.styles.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="app"></div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>    
+
+    <script>        
+
+        styleMap = {
+            'BackgroundColor': 'background-color',
+            'BorderBottomColor': 'border-bottom-color',
+            'BorderBottomEndRadius': 'border-bottom-right-radius',
+            'BorderBottomLeftRadius': 'border-bottom-left-radius',
+            'BorderBottomRightRadius': 'border-bottom-right-radius',
+            'BorderBottomStartRadius': 'border-bottom-left-radius',
+            'BorderBottomWidth': 'border-bottom-width',
+            'BorderColor': 'border-color',
+            'BorderEndColor': 'border-right-color',
+            'BorderLeftColor': 'border-left-color',
+            'BorderLeftWidth': 'border-left-width',
+            'BorderRadius': 'border-radius',
+            'BorderRightColor': 'border-right-color',
+            'BorderRightWidth': 'border-right-width',
+            'BorderStartColor': 'border-left-color',
+            'BorderStyle': 'border-style',
+            'BorderTopColor': 'border-top-color',
+            'BorderTopEndRadius': 'border-top-right-radius',
+            'BorderTopLeftRadius': 'border-top-left-radius',
+            'BorderTopRightRadius': 'border-top-right-radius',
+            'BorderTopStartRadius': 'border-top-left-radius',
+            'BorderTopWidth': 'border-top-width',
+            'BorderWidth': 'border-width',
+            'Opacity': 'opacity',
+            'AlignContent': 'align-content',
+            'AlignItems': 'align-items',
+            'AlignSelf': 'align-self',
+            'AspectRatio': 'TOD',
+            'Bottom': 'bottom',
+            'Direction': 'direction',
+            'Display': 'display',
+            'End': 'right',
+            'Flex': 'flex',
+            'FlexBasis': 'flex-basis',
+            'FlexDirection': 'flex-direction',
+            'FlexGrow': 'flex-grow',
+            'FlexShrink': 'flex-shrink',
+            'FlexWrap': 'flex-wrap',
+            'Height': 'height',
+            'JustifyContent': 'justify-content',
+            'Left': 'left',
+            'Margin': 'margin',
+            'MarginBottom': 'margin-bottom',
+            'MarginEnd': 'margin-right',
+            'MarginHorizontal': 'TODO',
+            'MarginLeft': 'margin-left',
+            'MarginRight': 'margin-right',
+            'MarginStart': 'margin-left',
+            'MarginTop': 'margin-top',
+            'MarginVertical': 'TOD',
+            'MaxHeight': 'max-height',
+            'MaxWidth': 'max-width',
+            'MinHeight': 'min-height',
+            'MinWidth': 'min-width',
+            'Overflow': 'overflow',
+            'Padding': 'padding',
+            'PaddingBottom': 'padding-bottom',
+            'PaddingEnd': 'padding-right',
+            'PaddingHorizontal': 'TOD',
+            'PaddingLeft': 'padding-left',
+            'PaddingRight': 'padding-right',
+            'PaddingStart': 'padding-left',
+            'PaddingTop': 'padding-top',
+            'PaddingVertical': 'TODO',
+            'Position': 'position',
+            'Right': 'right',
+            'Start': 'left',
+            'Top': 'top',
+            'Width': 'width',
+            'ZIndex': 'z-index',
+        }
+
+        elements = {};
+        rootId = uuid.v4();
+        elements[rootId] = document.getElementById('app');
+
+        window.AppendChild = (parent, child) => {
+            var p = elements[parent];
+            var c = elements[child];
+
+            p.appendChild(c);
+        }
+
+        window.CreateElement = (name) => {
+            tag = '';
+            switch (name) {
+                case 'View':
+                    tag = 'div';
+                    break;
+                case 'Text':
+                    tag = 'div';
+                    break;
+                case 'Image':
+                    tag = 'img';
+                    break;
+            }
+            let id = uuid.v4();
+            elements[id] = document.createElement(tag);
+
+            return id;
+        }
+
+        window.DestroyElement = (id) => {            
+            elements[id] = undefined;
+        }
+
+        window.GetAttribute = (id, name) => {
+            var val = elements[id].style[styleMap[name]];
+            return val == '' ? null : val + postStr(name);
+        }
+
+        window.GetRootElement = () => {
+            return rootId;
+        }
+
+        window.HasChild = (parent, child) => {
+            var p = elements[parent];
+            var c = elements[child];
+            var arr = [...p.children];
+            return arr.some(x => x == c);
+        }
+
+        window.Remove = (id) => {
+            elements[id].remove();            
+        }
+
+        window.SetAttribute = (id, name, value) => {
+            elements[id].style[styleMap[name]] = value + postStr(name);
+        }
+
+        function postStr(name) {
+            switch (name) {
+                case 'Width':
+                case 'Height':
+                    return 'px'
+                default:
+                    return ''
+            }
+        }
+        
+
+    </script>
+
+</body>
+
+</html>

@@ -1,4 +1,6 @@
-﻿using CSX.Rendering;
+﻿using CSX.Components;
+using CSX.NativeComponents;
+using CSX.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,22 +9,22 @@ using System.Threading.Tasks;
 
 namespace CSX.Lab
 {
-    public class Element
+    public class ElementA
     {
-        public Element? Parent { get; set; }
+        public ElementA? Parent { get; set; }
         public Guid Id { get; set; }
         public string? Name { get; set; }
         public Dictionary<string, string?> Attributes { get; } = new Dictionary<string, string?>();
-        public List<Element> Children { get; } = new List<Element>();
+        public List<ElementA> Children { get; } = new List<ElementA>();
     }
 
     public class MemoryDOM : IDOM
     {
-        static Element _root = new Element() { Id = Guid.NewGuid(), Name = "Root" };
+        static ElementA _root = new ElementA() { Id = Guid.NewGuid(), Name = "Root" };
 
-        Element Root = _root;
+        ElementA Root = _root;
 
-        Dictionary<Guid, Element> elements = new Dictionary<Guid, Element>() { { _root.Id, _root } };
+        Dictionary<Guid, ElementA> elements = new Dictionary<Guid, ElementA>() { { _root.Id, _root } };
 
         public void AppendChild(Guid parent, Guid child)
         {
@@ -35,7 +37,7 @@ namespace CSX.Lab
 
         public Guid CreateElement(string name)
         {
-            var element = new Element() { Id = Guid.NewGuid(), Name = name };
+            var element = new ElementA() { Id = Guid.NewGuid(), Name = name };
             elements.Add(element.Id, element);
             return element.Id;
         }
@@ -69,5 +71,17 @@ namespace CSX.Lab
         {
             elements[id].Attributes[name] = value;
         }
+    }
+
+    public static class ComponentFunctions
+    {
+        public static Element View(ViewProps? props = null, IEnumerable<Element>? children = null)
+            => ComponentFactory.CreateElement<View, ViewProps>(props ?? new ViewProps(), children ?? new Element[0]);
+
+        public static Element Text(TextProps? props = null, IEnumerable<Element>? children = null)
+            => ComponentFactory.CreateElement<Text, TextProps>(props ?? new TextProps(), children ?? new Element[0]);
+
+        public static Element String(string value)
+            => ComponentFactory.CreateElement<StringComponent, StringProps>(new StringProps(value), new Element[0]);
     }
 }
