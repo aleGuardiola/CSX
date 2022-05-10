@@ -21,7 +21,7 @@ namespace CSX.Components
         IServiceProvider? _serviceProvider;
 
         TState? _state;
-        protected TState State => _state ?? throw new InvalidOperationException("Component has not been initialized");
+        public TState State => _state ?? throw new InvalidOperationException("Component has not been initialized");
 
         TProps? _props;
         public TProps Props => _props ?? throw new InvalidOperationException("Component has not been initialized");
@@ -122,21 +122,8 @@ namespace CSX.Components
 
         protected virtual void OnDestroy() { }        
         protected abstract TState OnInitialize();
-        
-        protected virtual Element Render() 
-        {
-            
-            throw new NotImplementedException();
-        }
-        
-        public void Attach(Microsoft.AspNetCore.Components.RenderHandle renderHandle)
-        {           
-            throw new NotImplementedException();
-        }
 
-        public Task SetParametersAsync(Microsoft.AspNetCore.Components.ParameterView parameters)
-        {            
-            throw new NotImplementedException();
-        }
+        protected abstract Element Render();
+        
     }
 }

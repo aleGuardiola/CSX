@@ -83,17 +83,6 @@ namespace CSX.Components
 
         protected abstract Guid OnInitialize(IDOM dom);
         protected abstract void OnDestroy(IDOM dom);
-        protected abstract void Render(IDOM dom);
-
-        
-        public void Attach(Microsoft.AspNetCore.Components.RenderHandle renderHandle)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task SetParametersAsync(Microsoft.AspNetCore.Components.ParameterView parameters)
-        {
-            throw new NotImplementedException();
-        }
+        protected abstract void Render(IDOM dom);        
     }
 }

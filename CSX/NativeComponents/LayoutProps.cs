@@ -77,7 +77,7 @@ namespace CSX.NativeComponents
     }
     public record LayoutStyleProps : Props
     {
-        public AlignContent? AlignContent { get; init; }
+        public AlignContent? AlignContent { get; init; } = NativeComponents.AlignContent.FlexStart;
         public AlignItems? AlignItems { get; init; }
         public AlignSelf? AlignSelf { get; init; }
         public double? AspectRatio { get; init; }
@@ -87,9 +87,9 @@ namespace CSX.NativeComponents
         public double? End { get; init; }
         public double? Flex { get; init; }
         public double? FlexBasis { get; init; }
-        public FlexDirection? FlexDirection { get; init; }
+        public FlexDirection? FlexDirection { get; init; } = NativeComponents.FlexDirection.Column;
         public double? FlexGrow { get; init; }
-        public double? FlexShrink { get; init; }
+        public double? FlexShrink { get; init; } = 0;
         public FlexWrap? FlexWrap { get; init; }
         public double? Height { get; init; }
         public JustifyContent? JustifyContent { get; init; }

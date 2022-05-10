@@ -26,7 +26,7 @@ namespace CSX.Animations
 
         protected override float ChangeFunction(int time)
         {
-            var timeScale = time / Duration;
+            var timeScale = (float)time / (float)Duration;
             var valueScale = GetScaleValue(timeScale);
             return valueScale;
         }
@@ -35,6 +35,7 @@ namespace CSX.Animations
         {
             var valueConverted = ConvertScaleValue(value);
             var newState = ChangeState.Invoke(Component.State, valueConverted);
+            Component.SetState(newState);
         }
     }
 }

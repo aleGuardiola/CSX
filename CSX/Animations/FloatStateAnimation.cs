@@ -1,4 +1,5 @@
-﻿using CSX.Components;
+﻿using CSX.Animations.Interpolators;
+using CSX.Components;
 using System;
 using System.Collections.Generic;
 using System.Linq;

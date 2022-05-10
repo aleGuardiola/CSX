@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CSX.Components
 {
-    public record StringProps(string Value) : Props;
+    public record StringProps(string? Value) : Props;
     public class StringComponent : DOMComponent<StringProps>
     {        
         protected override Guid OnInitialize(IDOM dom)

@@ -2,7 +2,7 @@
 
 namespace CSX.Components
 {
-    public interface IComponent : Microsoft.AspNetCore.Components.IComponent
+    public interface IComponent
     {
         Guid DOMElement { get; }
         public void Initialize(IDOM dom);

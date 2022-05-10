@@ -1,5 +1,6 @@
-﻿using CSX.Components;
-using System.Timers;
+﻿using CSX.Animations;
+using CSX.Animations.Interpolators;
+using CSX.Components;
 using static BlazorApp1.ComponentFunctions;
 
 namespace BlazorApp1;
@@ -11,53 +12,37 @@ public record TestProps : Props
 }
 public record ComponentTestState
 {
-    public bool IsRed { get; init; } = true;
+    public double FontSize { get; init; } = 50;
+    public double LastNameFontSize { get; init; } = 50;
 }
 public partial class ComponentTest : Component<ComponentTestState, TestProps>
 {
     protected override ComponentTestState OnInitialize()
-    {
-        Func<Task>? timer = null;
-        timer = async () =>
-        {
-            await Task.Delay(250);
-            SetState(State with { IsRed = !State.IsRed });
-            Task.Run(timer);
-        };
-
-        Task.Run(timer);
+    {        
+        this.RunParallelAnimation(new[] {
+            this.ValueAnimation(1000, 50, 500, new BounceInterpolator(), (s, v) => s with { FontSize = v}),
+            this.ValueAnimation(100, 50, 300, new DecelerateInterpolator(), (s, v) => s with { LastNameFontSize = v})
+        });
 
         return new();           
     }
 
     protected override Element Render()
-    {
-        var views = State.IsRed ? new[]
+    {        
+        return View(new() { Style = new() { Flex=1 } }, new[]
         {
-            View(new() { Style = new() { BackgroundColor = State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = !State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = !State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = !State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = !State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = !State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = !State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-        } : new[]
-        {
-            View(new() { Style = new() { BackgroundColor = State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = !State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = !State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-            View(new() { Style = new() { BackgroundColor = !State.IsRed ? "#FF0000" : "#0000FF", Width = 100, Height = 100 } }),
-        };
-
-        return         
-        View(new(), views);
+            Text(new(){ Style=new(){ Color="#FF0000", FontSize=State.FontSize } }, new[]
+            {
+                String(Props.Name)
+            }),
+            Text(new(){ Style=new() { FontSize=State.LastNameFontSize } }, new[]
+            {
+                String(Props.LastName)
+            }),
+            View(new(){ Style = new(){ Flex=1, BackgroundColor = "powderblue" }}),
+            View(new(){ Style = new(){ Flex=2, BackgroundColor = "skyblue" }}),
+            View(new(){ Style = new(){ Flex=3, BackgroundColor = "steelblue" }}),
+        });
     }
 
 
