@@ -1,11 +1,6 @@
 ﻿using CSX.Components;
 using CSX.Rendering;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace CSX.NativeComponents
 {
@@ -29,17 +24,14 @@ namespace CSX.NativeComponents
     public class Image : DOMComponent<ImageProps>
     {
         const string name = "Image";
-        protected override Guid OnInitialize(IDOM dom)
+        protected override ulong OnInitialize(IDOM dom)
         {
             return dom.CreateElement(name);
         }
 
         protected override void Render(IDOM dom)
         {
-            foreach (var propValue in GetPropertiesWithValues())
-            {
-                dom.SetAttributeIfDifferent(DOMElement, propValue.Name, propValue.Value);
-            }
+            dom.SetAttributesIfDifferent(DOMElement, GetPropertiesWithValues().Select(x => new KeyValuePair<string, string?>(x.Name, x.Value)));
 
             dom.SetAttributeIfDifferent(DOMElement, "Source", JsonSerializer.Serialize(Props.Source));
         }

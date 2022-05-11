@@ -18,8 +18,8 @@ public static class ComponentFunctions
     public static Element ScrollView(ScrollViewProps? props = null, Content? children = null)
         => ComponentFactory.CreateElement<ScrollView, ScrollViewProps>(props ?? new ScrollViewProps(), children ?? new Content());
 
-    public static Element ListViewT<TData>(ListViewProps<TData>? props = null, Content? children = null)
-        => ComponentFactory.CreateElement<ListViewT<TData>, ListViewProps<TData>>(props ?? new ListViewProps<TData>(), children ?? new Content());
+    public static Element ListView<TData>(ListViewProps<TData>? props = null, Content? children = null)
+        => ComponentFactory.CreateElement<ListView<TData>, ListViewProps<TData>>(props ?? new ListViewProps<TData>(), children ?? new Content());
 
     public static Element Text(TextProps? props = null, Content? children = null)
         => ComponentFactory.CreateElement<Text, TextProps>(props ?? new TextProps(), children ?? new Content());
@@ -32,9 +32,6 @@ public static class ComponentFunctions
 
     public static Element Button(ButtonProps? props = null, Content? children = null)
         => ComponentFactory.CreateElement<Button, ButtonProps>(props ?? new ButtonProps(), children ?? new Content());
-
-    public static Element String(string? value)
-        => ComponentFactory.CreateElement<StringComponent, StringProps>(new StringProps(value), new Content());
 }
 
 

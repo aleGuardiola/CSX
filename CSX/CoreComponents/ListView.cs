@@ -11,24 +11,46 @@ namespace CSX.CoreComponents
 {
     public record ListViewProps<TData> : ScrollViewProps
     {
-        public double? RowHeight { get; init; }
-        public IEnumerable<TData>? Data { get; init; }
-        public Func<TData, Element>? RenderItem { get; init; }
+        public TData[] Data { get; init; } = new TData[0];
+        public double RowHeight { get; init; } = 0;
+        public Func<TData, Element>? RenderItem { get; init;}
     }
     public record ListViewState
     {
-        public double PlaceholderHeight { get; init; } = 0;
+        public double ScrollY { get; init; } = 0;
     }
     public class ListView<TData> : Component<ListViewState, ListViewProps<TData>>
-    {        
+    {
+        protected override ListViewState OnInitialize()
+        {
+            return new();
+        }
+
         protected override Element Render()
-        {           
+        {
+            var rowHeight = Props.RowHeight;
+            var nodePadding = 20;
+            var itemCount = Props.Data.Length;
+            var viewportHeight = Props.Style?.Height ?? 0;
 
-            return ScrollView(Props, new[]
-            {               
+            var totalContentHeight = itemCount * rowHeight;
 
-                // placeholder view
-                View(new(){ Style=new(){ Height=State.PlaceholderHeight } })
+            var startNode = (int)Math.Max( Math.Floor(State.ScrollY / rowHeight) - nodePadding, 0);
+            var visibleNodesCount = (int)Math.Min(itemCount - startNode, Math.Ceiling(viewportHeight / rowHeight) + (2 * nodePadding));
+
+            var offsetY = startNode * rowHeight;
+
+            var childrenElements = Props.Data.Skip(startNode).Take(visibleNodesCount).Select(x => Props.RenderItem(x)).ToArray();
+
+            return ScrollView(Props with { OnScroll = (ev) => SetState(State with { ScrollY = ev.Y }) }, new()
+            {
+                View(new() { Style = new() { Height = totalContentHeight } }, new()
+                {
+                    View(new() { Style = new() { MarginTop = offsetY } }, new()
+                    {
+                        childrenElements.ToContent()
+                    }),
+                })
             });
         }
     }

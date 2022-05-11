@@ -1,5 +1,8 @@
 ﻿using CSX.Components;
+using CSX.Events;
 using CSX.Rendering;
+using System.Reactive.Linq;
+using System.Text.Json;
 
 namespace CSX.NativeComponents
 {
@@ -38,28 +41,45 @@ namespace CSX.NativeComponents
     }
     public record ViewProps<TStyle> : Props where TStyle : ViewStyleProps
     {
-        public TStyle? Style { get; init; }
+        public Action<CursorEventArgs>? OnPress { get; init; }
+        public Action<CursorEventArgs>? OnMouseOver { get; init; }
+        public Action<CursorEventArgs>? OnMouseOut { get; init; }
+        public TStyle? Style { get; init; } = Activator.CreateInstance<TStyle>();
     }
     public record ViewProps : ViewProps<ViewStyleProps>;    
     public class View : DOMComponent<ViewProps>
     {
+        IDisposable? _eventsSubscription;
+
         const string name = "View";
-        protected override Guid OnInitialize(IDOM dom)
+        protected override ulong OnInitialize(IDOM dom)
         {
-            return dom.CreateElement(name);
+            var elementId = dom.CreateElement(name);
+
+            _eventsSubscription = dom.Events.Where(x => x.ElementId == elementId).Subscribe(ev =>
+            {
+                switch(ev.EventName)
+                {
+                    case "click":
+                        Props.OnPress?.Invoke(ev.Payload.Deserialize<CursorEventArgs>() ?? throw new InvalidOperationException("Failed to get event apyload"));
+                        break;
+                    case "mouseover":
+                        Props.OnMouseOver?.Invoke(ev.Payload.Deserialize<CursorEventArgs>() ?? throw new InvalidOperationException("Failed to get event apyload"));
+                        break;
+                    case "mouseout":
+                        Props.OnMouseOut?.Invoke(ev.Payload.Deserialize<CursorEventArgs>() ?? throw new InvalidOperationException("Failed to get event apyload"));
+                        break;
+                }
+            });
+
+            return elementId;
         }
 
         protected override void Render(IDOM dom)
-        {
-            foreach(var propValue in GetPropertiesWithValues())
-            {
-                dom.SetAttributeIfDifferent(DOMElement, propValue.Name, propValue.Value);
-            }
+        {            
+            dom.SetAttributesIfDifferent(DOMElement, GetPropertiesWithValues().Select(x => new KeyValuePair<string, string?>(x.Name, x.Value)));
 
-            foreach (var child in Children)
-            {
-                dom.AppendChildIfNotAppended(DOMElement, child.DOMElement);
-            }
+            RenderChildren(dom);
         }
 
         IEnumerable<(string Name, string? Value)> GetPropertiesWithValues()
@@ -139,6 +159,7 @@ namespace CSX.NativeComponents
 
         protected override void OnDestroy(IDOM dom)
         {
+            _eventsSubscription?.Dispose();
             dom.Remove(DOMElement);
             dom.DestroyElement(DOMElement);
         }

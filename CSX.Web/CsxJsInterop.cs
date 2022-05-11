@@ -1,3 +1,4 @@
+using CSX.Rendering;
 using Microsoft.JSInterop;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -5,24 +6,26 @@ using System.Runtime.InteropServices;
 using WebAssembly.JSInterop;
 
 namespace CSX.Web
-{   
+{
     public static class CsxJsInterop
-    {        
+    {
+        static Action<Event>? _handler;
+
         public static void CreateElement(string tag, string id)
         {
             var callInfo = new JSCallInfo()
             {
                 FunctionIdentifier = nameof(CreateElement),
                 ResultType = JSCallResultType.JSVoidResult,
-                TargetInstanceId = 0,                
+                TargetInstanceId = 0,
             };
-            
+
             InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, tag, id, null);
-            
-            if(exception != null)
+
+            if (exception != null)
             {
                 Console.WriteLine(exception);
-            }            
+            }
         }
 
         public static void RemoveElement(string id)
@@ -108,9 +111,58 @@ namespace CSX.Web
             }
         }
 
+        public static void SetChildren(string id, string childrenJson)
+        {
+            var callInfo = new JSCallInfo()
+            {
+                FunctionIdentifier = nameof(SetChildren),
+                ResultType = JSCallResultType.JSVoidResult,
+                TargetInstanceId = 0,
+            };
 
+            InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, childrenJson, null);
+            if (exception != null)
+            {
+                Console.WriteLine(exception);
+            }
+        }
+
+        public static void SetElementAttributes(string id, string attrs)
+        {
+            var callInfo = new JSCallInfo()
+            {
+                FunctionIdentifier = nameof(SetElementAttributes),
+                ResultType = JSCallResultType.JSVoidResult,
+                TargetInstanceId = 0,
+            };
+
+            InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, attrs, null);
+            if (exception != null)
+            {
+                Console.WriteLine(exception);
+            }
+        }
+
+        public static void SetEventHandler(Action<Event> handler)
+        {
+            _handler = handler;
+        }
+
+        [JSInvokable]
+        public static void OnEvent(Event @event)
+        {
+            if (_handler == null)
+            {
+                return;
+            }
+
+            lock (_handler)
+            {
+                _handler(@event);
+            }
+        }
     }
-    
+
 
 }
 

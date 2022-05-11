@@ -8,13 +8,18 @@ namespace CSX.Rendering
 {
     public interface IDOM
     {
-        Guid GetRootElement();
-        Guid CreateElement(string name);
-        void Remove(Guid id);
-        void SetAttribute(Guid id, string name, string? value);
-        string? GetAttribute(Guid id, string name);
-        void AppendChild(Guid parent, Guid child);        
-        bool HasChild(Guid parent, Guid child);
-        void DestroyElement(Guid id);
-    }
+        IObservable<Event> Events { get; }
+        ulong GetRootElement();
+        ulong CreateElement(string name);
+        void Remove(ulong id);
+        void SetChildren(ulong id, ulong[] children);
+        void SetAttribute(ulong id, string name, string? value);
+        void SetAttributes(ulong id, KeyValuePair<string, string?>[] attributes);
+        void SetElementText(ulong id, string text);
+        string? GetAttribute(ulong id, string name);
+        void AppendChild(ulong parent, ulong child); 
+        bool HasChild(ulong parent, ulong child);
+        void DestroyElement(ulong id);
+    }   
+
 }

@@ -13,20 +13,24 @@ namespace CSX.NativeComponents
 {    
     public record ScrollViewProps : ViewProps<ViewStyleProps>
     {
-        
+        public Action<ScrollEventArgs>? OnScroll { get; init; }
     }
-    public class ScrollView : DOMComponent<ScrollViewProps>
+    public class ScrollView : ScrollView<ScrollViewProps> { }
+    public class ScrollView<TProps> : DOMComponent<TProps> where TProps : ScrollViewProps
     {
         const string name = "ScrollView";
 
         IDisposable? _eventsSubscription;
 
-        protected override Guid OnInitialize(IDOM dom)
+        protected override ulong OnInitialize(IDOM dom)
         {
             var elementId = dom.CreateElement(name);
 
             _eventsSubscription = dom.Events.Where(x => x.ElementId == elementId).Subscribe(ev =>
             {
+
+                var json = ev.Payload.ToString();
+                var obj = ev.Payload.Deserialize<ScrollEventArgs>();
                 switch (ev.EventName)
                 {
                     case "click":
@@ -38,6 +42,9 @@ namespace CSX.NativeComponents
                     case "mouseout":
                         Props.OnMouseOut?.Invoke(ev.Payload.Deserialize<CursorEventArgs>() ?? throw new InvalidOperationException("Failed to get event apyload"));
                         break;
+                    case "scroll":
+                        Props.OnScroll?.Invoke(ev.Payload.Deserialize<ScrollEventArgs>() ?? throw new InvalidOperationException("Failed to get event apyload"));
+                        break;
                 }
             });
 
@@ -46,18 +53,13 @@ namespace CSX.NativeComponents
 
         protected override void Render(IDOM dom)
         {
-            foreach (var propValue in GetPropertiesWithValues())
-            {
-                dom.SetAttributeIfDifferent(DOMElement, propValue.Name, propValue.Value);
-            }
+            dom.SetAttributesIfDifferent(DOMElement, GetPropertiesWithValues().Select(x => new KeyValuePair<string, string?>(x.Name, x.Value)));
 
-            foreach (var child in Children)
-            {
-                dom.AppendChildIfNotAppended(DOMElement, child.DOMElement);
-            }
+            RenderChildren(dom);
+
         }
 
-        IEnumerable<(string Name, string? Value)> GetPropertiesWithValues()
+        protected IEnumerable<(string Name, string? Value)> GetPropertiesWithValues()
         {
             // styles
             yield return ($"Style.{nameof(ViewStyleProps.BackgroundColor)}", Props.Style?.BackgroundColor?.ToString());

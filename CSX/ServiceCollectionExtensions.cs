@@ -1,4 +1,5 @@
 ﻿using CSX.Components;
+using CSX.CoreComponents;
 using CSX.NativeComponents;
 using CSX.Rendering;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +18,10 @@ namespace CSX
             services.AddComponent<Image>();
             services.AddComponent<View>();
             services.AddComponent<Text>();
-            services.AddComponent<StringComponent>();
+            services.AddComponent<Button>();
+            services.AddComponent<TextInput>();
+            services.AddComponent<ScrollView>();                     
+            services.AddComponent(typeof(ListView<>));
 
             return services;            
         }

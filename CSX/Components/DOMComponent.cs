@@ -10,17 +10,23 @@ namespace CSX.Components
 {
     public abstract class DOMComponent<TProps> : EventDispatcherHandler, IComponent<TProps> where TProps : Props
     {
-        Action? _onRenderHandler;
+        bool shoudRerender = false;
+
+        protected Action? OnRenderHandler;
         TProps? _props;
         public TProps Props => _props ?? throw new InvalidOperationException("Component has not been initialized");
 
         Props IComponent.Props => Props;
 
-        IReadOnlyCollection<IComponent> _children = new IComponent[0];
+        IComponent[] _oldChildren = new IComponent[0];
+        IComponent[] _children = new IComponent[0];
         public IReadOnlyCollection<IComponent> Children => _children;
+        protected IReadOnlyCollection<IComponent> OldChildren => _oldChildren;
 
-        Guid _domElement;
-        public Guid DOMElement => _domElement;
+        IDOM? _dom;
+
+        ulong _domElement;
+        public ulong DOMElement => _domElement;
 
         public void SetProps(TProps props)
         {
@@ -29,19 +35,39 @@ namespace CSX.Components
                 _props = props;
                 return;
             }
-
+            
             if (_props.Equals(props))
             {
                 return;
             }
 
             _props = props;
-            NotifyChange();
+            ReRender();
         }
 
         public void SetChildren(IEnumerable<IComponent> children)
         {
-            _children = children.ToList().AsReadOnly();
+            // Only re render when children have changed order or quantity
+            var newChildren = children.ToArray();
+
+            if(newChildren.Length != _children.Length)
+            {
+                shoudRerender = true;
+            }
+            else
+            {
+                for(var i = 0; i < newChildren.Length; i++)
+                {
+                    if(!ReferenceEquals(newChildren[i], _children[i]))
+                    {
+                        shoudRerender = true;
+                        break;
+                    }
+                }
+            }
+
+            _oldChildren = _children;
+            _children = newChildren;
         }
 
         public void SetProps(object props)
@@ -49,31 +75,42 @@ namespace CSX.Components
 
         public void Initialize(IDOM dom)
         {
+            _dom = dom;
             _domElement = OnInitialize(dom);
             // first view render
-            NotifyChange();            
+            ReRender();                 
         }
 
         public void OnRender(Action handler)
         {
-            _onRenderHandler = handler;
+            OnRenderHandler = handler;
+        }
+
+        public void ReRender()
+        {
+            RenderView(_dom);
         }
 
         public void NotifyChange()
         {
-            _onRenderHandler?.Invoke();
+            OnRenderHandler?.Invoke();
         }
         
         public void SetServiceProvider(IServiceProvider serviceProvider) { }
         
         public void RenderView(IDOM dom)
-        {            
+        {
+            Render(dom);
+
             foreach (var child in Children)
             {
-                child.RenderView(dom);
+                if(child.ShouldRender())
+                {
+                    child.RenderView(dom);
+                }                
             }
-
-            Render(dom);
+            
+            shoudRerender = false;
         }
 
         public void Destroy(IDOM dom)
@@ -81,7 +118,38 @@ namespace CSX.Components
             OnDestroy(dom);
         }
 
-        protected abstract Guid OnInitialize(IDOM dom);
+        /// <summary>
+        /// This method is only true when chilren have changed so it can safely be used to detect that
+        /// </summary>
+        /// <returns></returns>
+        public bool ShouldRender()
+        {
+            return shoudRerender;
+        }
+
+        /// <summary>
+        /// This is for most cases rendering children
+        /// </summary>
+        /// <param name="dom"></param>
+        protected void RenderChildren(IDOM dom)
+        {
+            // Not rendering children if they have not changes in theri order or types
+            if(!ShouldRender())
+            {
+                return;
+            }
+
+            // Remove old children
+            // dom.RemoveAllChildren(DOMElement);
+            dom.SetChildren(DOMElement, Children.Select(x => x.DOMElement).ToArray());
+            // Append new childs
+            //foreach (var child in Children)
+            //{                
+            //    dom.AppendChildIfNotAppended(DOMElement, child.DOMElement);
+            //}
+        }
+
+        protected abstract ulong OnInitialize(IDOM dom);
         protected abstract void OnDestroy(IDOM dom);
         protected abstract void Render(IDOM dom);        
     }

@@ -1,6 +1,7 @@
 ﻿using CSX.Rendering;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,7 +23,7 @@ namespace CSX.Components
             }            
         }
 
-        public static void SetAttributeIfDifferent(this IDOM dom, Guid element, string name, string? value)
+        public static void SetAttributeIfDifferent(this IDOM dom, ulong element, string name, string? value)
         {
             var domValue = dom.GetAttribute(element, name);
             if (domValue != value)
@@ -31,7 +32,13 @@ namespace CSX.Components
             }
         }
 
-        public static void AppendChildIfNotAppended(this IDOM dom, Guid parent, Guid child)
+        public static void SetAttributesIfDifferent(this IDOM dom, ulong element, IEnumerable<KeyValuePair<string, string?>> attributes)
+        {
+            var filtered = attributes.Where(x => dom.GetAttribute(element, x.Key) != x.Value).ToArray();
+            dom.SetAttributes(element, filtered);
+        }
+
+        public static void AppendChildIfNotAppended(this IDOM dom, ulong parent, ulong child)
         {
             if (!dom.HasChild(parent, child))
             {
@@ -50,6 +57,9 @@ namespace CSX.Components
 
         public static Element UpdateTree(Element? current, Element @new, IServiceProvider serviceProvider, IDOM dom, Action? onRender)
         {
+            //var sw = Stopwatch.StartNew();
+            // sw.Start();
+
             if (current == null)
             {
                 CreateComponent(@new, serviceProvider, dom, onRender);
@@ -61,60 +71,97 @@ namespace CSX.Components
                 DestroyComponent(current, dom);
                 CreateComponent(@new, serviceProvider, dom, onRender);
                 return @new;
-            }           
-
-            var currentNoKeys = current.Children.Where(c => string.IsNullOrEmpty(c.Props.Key)).ToArray();
-            var newNoKeys = @new.Children.Where(c => string.IsNullOrEmpty(c.Props.Key)).ToArray();
-
-            for (int i = 0; i < newNoKeys.Length; i++)
-            {
-                var currentChild = currentNoKeys.Length > i ? currentNoKeys[i] : null;
-                var newChild = newNoKeys[i];
-                UpdateTree(currentChild, newChild, serviceProvider, dom, onRender);
             }
-            
-            var currentWithKeys = current.Children.Where(x => !string.IsNullOrEmpty(x.Props.Key)).ToDictionary(x => x.Props.Key ?? throw new Exception("Key cannot be null"), x => x);
-            var newWithKeys = @new.Children.Where(x => !string.IsNullOrEmpty(x.Props.Key)).ToDictionary(x => x.Props.Key ?? throw new Exception("Key cannot be null"), x => x);
+                        
+            var currentChildren = current.Children;
+            var newChildren = @new.Children;
 
-            foreach (var key in newWithKeys.Keys)
+#pragma warning disable CS8714
+            var currentChildrenWithKeys = currentChildren.Where(cc => !string.IsNullOrEmpty(cc.Props.Key) && newChildren.Any(nc => nc.Props.Key == cc.Props.Key) ).ToDictionary(x => x.Props.Key, x => x);
+
+            var currentChildrenWithNoKeys = currentChildren.Where(x => string.IsNullOrEmpty(x.Props.Key) || !currentChildrenWithKeys.ContainsKey(x.Props.Key)).ToArray();
+
+            int j = 0;
+            for (int i = 0; i < newChildren.Length; i++)
             {
-                var currentChild = currentWithKeys.GetValueOrDefault(key);
-                var newChild = newWithKeys[key];
-                UpdateTree(currentChild, newChild, serviceProvider, dom, onRender);
+                var child = newChildren[i];
+                
+                if(!string.IsNullOrEmpty(child?.Props.Key) && currentChildrenWithKeys.ContainsKey(child?.Props.Key))
+                {
+                    var currentWithKey = currentChildrenWithKeys[child.Props.Key];
+                    child.Children = currentWithKey.Children;
+                    child.Component = currentWithKey.Component;                    
+                }
+                else
+                {
+                    // This means there is no children to match so the component has to be created
+                    if(j >= currentChildrenWithNoKeys.Length)
+                    {
+                        UpdateTree(null, child, serviceProvider, dom, onRender);
+                    }
+                    else
+                    {
+                        var currentWihNoKey = currentChildrenWithNoKeys[j];
+                        try
+                        {
+                            UpdateTree(currentWihNoKey, child, serviceProvider, dom, onRender);
+                        } catch(Exception ex)
+                        {
+                            Console.Error.WriteLine(ex);
+                        }
+                        
+                        j++;
+                    }
+                    
+                }
+
+                //sw.Stop();
+                //Console.WriteLine("Update Tree took: {0}ms", sw.ElapsedMilliseconds);
+
+            }
+#pragma warning restore CS8714
+
+            // Destroy the children to be destroyed
+            var childrenToDestroy = currentChildren.Where(x => !newChildren.Any(y => ReferenceEquals(y.Component, x.Component))).ToArray();
+            foreach(var childToDestroy in childrenToDestroy)
+            {
+                DestroyComponent(childToDestroy, dom);
             }
 
-            // Destroy removed children
-            var newChildrenComponents = @new.Children.Select(x => x.Component ?? throw new InvalidOperationException("Could not update component")).ToArray();
-            var removedChildren = current.Children.Where(x => !newChildrenComponents.Contains(x.Component));
-            foreach (var child in removedChildren)
-            {
-                DestroyComponent(child, dom);
-            }
 
-            var component = current.Component ?? throw new InvalidOperationException("Could not update component");            
-            component.SetProps(@new.Props);
-            component.SetChildren(newChildrenComponents);
+            var component = current.Component ?? throw new InvalidOperationException("Could not update component");
+
+            // Set children first because if props changed it will re render and can try to append already destroyed elements
+            component.SetChildren(newChildren.Select(x => x.Component));
+            component.SetProps(@new.Props);            
             @new.Component = component;
 
             return @new;
         }
 
-        public static void CreateComponent(Element virtualComponent, IServiceProvider serviceProvider, IDOM dom, Action? onRender)
-        {
-            foreach (var child in virtualComponent.Children)
-            {
-                CreateComponent(child, serviceProvider, dom, onRender);
-            }
-
+        public static void CreateComponent(Element virtualComponent, IServiceProvider serviceProvider, IDOM dom, Action? onRender, bool appendToDom = false)
+        {            
             // construct component
             var component = (IComponent)(serviceProvider.GetService(virtualComponent.Type) ?? throw new Exception("Could not create component"));
 
             component.SetServiceProvider(serviceProvider);
             component.SetProps(virtualComponent.Props);
-            component.SetChildren(virtualComponent.Children.Select(x => x.Component ?? throw new Exception("Could not create component")));
-            component.Initialize(dom);
+            
             component.OnRender(onRender);
+            component.Initialize(dom);            
             virtualComponent.Component = component;
+
+            if(appendToDom)
+            {
+                dom.AppendToDom(component);
+            }
+
+            foreach (var child in virtualComponent.Children)
+            {
+                CreateComponent(child, serviceProvider, dom, onRender);
+            }
+
+            component.SetChildren(virtualComponent.Children.Select(x => x.Component ?? throw new Exception("Could not create component")));
         }
 
         public static void DestroyComponent(Element component, IDOM dom)

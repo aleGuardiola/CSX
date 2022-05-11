@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -103,25 +104,42 @@ namespace CSX
 
         private void OnStarted()
         {
-
-            var dom = Services.GetRequiredService<IDOM>();
-
-            var RootComponentElement = ComponentFactory.CreateElement(RootComponentType ?? throw new InvalidOperationException("Root component not setted"), RootComponentProps ?? throw new InvalidOperationException("Root component props not setted"), new List<Element>());
-
-            var onRender = () =>
+            try
             {
-                RootComponent?.RenderView(dom);
-                dom.AppendToDomIfNotAppended(RootComponent ?? throw new InvalidOperationException("Root component cannot be created"));
-            };
+                var dom = Services.GetRequiredService<IDOM>();
 
-            // create root component
-            ComponentFactory.CreateComponent(RootComponentElement, Services, dom, onRender);
+                var RootComponentElement = ComponentFactory.CreateElement(RootComponentType ?? throw new InvalidOperationException("Root component not setted"), RootComponentProps ?? throw new InvalidOperationException("Root component props not setted"), new List<Element>());
 
-            RootComponent = RootComponentElement.Component ?? throw new InvalidOperationException("Root component cannot be created");
+                var onRender = () =>
+                {
+                    if(RootComponent != null)
+                    {
+                        Stopwatch sw = Stopwatch.StartNew();
+                        sw.Start();
 
-            dom.AppendToDom(RootComponent);
+                        RootComponent.RenderView(dom);
+                        dom.AppendToDomIfNotAppended(RootComponent);
 
-            RootComponent.RenderView(dom);
+                        sw.Stop();
+                        Console.WriteLine("Render View time {0}", sw.ElapsedMilliseconds);
+                    }                    
+                };
+
+                Stopwatch sw = Stopwatch.StartNew();
+                sw.Start();
+
+                // create root component and append it to the dom
+                ComponentFactory.CreateComponent(RootComponentElement, Services, dom, onRender, appendToDom: true);
+
+                sw.Stop();
+                Console.WriteLine("First Render Time {0}", sw.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+            
         }
 
 

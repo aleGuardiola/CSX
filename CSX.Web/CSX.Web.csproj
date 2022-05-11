@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.JSInterop" Version="6.0.4" />
     <PackageReference Include="Microsoft.JSInterop.WebAssembly" Version="6.0.4" />
+    <PackageReference Include="System.Reactive" Version="5.0.0" />
   </ItemGroup>
 
 

@@ -1,22 +1,34 @@
 ﻿using CSX.Rendering;
+using System.Reactive.Subjects;
 using System.Text;
+using System.Text.Json;
 
 namespace CSX.Web;
 
 public class CSXWebDom : IDOM
 {
-    Dictionary<Guid, WebNode> _nodes = new Dictionary<Guid, WebNode>()
+    ulong nextId = 1;
+    Subject<Event> _eventPublisher = new Subject<Event>();
+    public IObservable<Event> Events => _eventPublisher;
+
+    Dictionary<ulong, WebNode> _nodes = new Dictionary<ulong, WebNode>()
         {
             {
-                Guid.Empty,
+                0,
                 new WebNode()
                 {
-                    Id = Guid.Empty,
+                    Id = 0,
                 }
             }
         };
 
-    public void AppendChild(Guid parent, Guid child)
+    public CSXWebDom()
+    {
+        // subscribe for events
+        CsxJsInterop.SetEventHandler((e) => _eventPublisher.OnNext(e));
+    }
+
+    public void AppendChild(ulong parent, ulong child)
     {
         try
         {
@@ -30,22 +42,39 @@ public class CSXWebDom : IDOM
         }
     }
 
-    public Guid CreateElement(string name)
+    public ulong CreateElement(string name)
     {
         try
         {
             var node = new WebNode();
-            node.Id = Guid.NewGuid();
+            node.Id = nextId++;
             node.Name = name;
             _nodes[node.Id] = node;
 
             var htmlTag = name switch
             {
                 "Image" => "img",
+                "Button" => "button",
+                "TextInput" => "input",
                 _ => "div"
             };
-
+            
             CsxJsInterop.CreateElement(htmlTag, node.Id.ToString());
+
+            if (htmlTag == "div" && name != "ScrollView")
+            {
+                CsxJsInterop.SetElementAttribute(node.Id.ToString(), "class", "csx-view");
+            }
+
+            if (name == "TextInput")
+            {
+                CsxJsInterop.SetElementAttribute(node.Id.ToString(), "type", "text");
+            }
+
+            if(name == "ScrollView")
+            {
+                SetAttribute(node.Id, "Style.OverflowY", "auto");
+            }
 
             return node.Id;
         }
@@ -56,7 +85,7 @@ public class CSXWebDom : IDOM
         }
     }
 
-    public void DestroyElement(Guid id)
+    public void DestroyElement(ulong id)
     {
         try
         {
@@ -70,7 +99,7 @@ public class CSXWebDom : IDOM
         }
     }
 
-    public string? GetAttribute(Guid id, string name)
+    public string? GetAttribute(ulong id, string name)
     {
         try
         {
@@ -87,12 +116,12 @@ public class CSXWebDom : IDOM
         }
     }
 
-    public Guid GetRootElement()
+    public ulong GetRootElement()
     {
-        return Guid.Empty;
+        return 0;
     }
 
-    public bool HasChild(Guid parent, Guid child)
+    public bool HasChild(ulong parent, ulong child)
     {
         try
         {
@@ -105,7 +134,7 @@ public class CSXWebDom : IDOM
         }
     }
 
-    public void Remove(Guid id)
+    public void Remove(ulong id)
     {
         try
         {
@@ -120,58 +149,76 @@ public class CSXWebDom : IDOM
         }
     }
 
-    public void SetAttribute(Guid id, string name, string? value)
+    public void SetAttribute(ulong id, string name, string? value)
     {
+        var transmormed = TransformAttribute(id, new KeyValuePair<string, string?>(name, value));
+        CsxJsInterop.SetElementAttribute(id.ToString(), transmormed.Key, transmormed.Value);
+    }
+
+    public void SetAttributes(ulong id, KeyValuePair<string, string?>[] attributes)
+    {
+        if(attributes.Length == 0)
+        {
+            return;
+        }
+
         try
         {
-            if (value == null)
+            var transformed = attributes.Select(x => TransformAttribute(id, x)).ToArray();
+            if(transformed.All(x => x.Key == "style"))
             {
-                _nodes[id].Attributes.Remove(name);
-            }
-            else
-            {
-                _nodes[id].Attributes[name] = value;
-            }
-
-            // style attribute
-            if (name.Contains("Style."))
-            {
-                var style = _nodes[id].HtmlStyle;
-
-                var propName = name.Split('.').Last();
-                var cssKey = GetCssProperty(propName);
-
-                if (value == null)
-                {
-                    if (style.ContainsKey(cssKey))
-                    {
-                        style.Remove(cssKey);
-                    }
-                }
-                else
-                {
-                    style[cssKey] = GetCssValue(cssKey, value);
-                }
-
-                var css = string.Join("", style.Select(s => $"{s.Key}: {s.Value};"));
-                CsxJsInterop.SetElementAttribute(id.ToString(), "style", css);
-            }
-            else
-            {
-                if(name == "TextContent")
-                {
-                    if(value != null)
-                    {
-                        CsxJsInterop.SetElementText(id.ToString(), value);
-                    }                    
-                }
+                CsxJsInterop.SetElementAttribute(id.ToString(), "style", transformed.Last().Value);
             }
         }
-        catch (Exception ex)
+        catch(Exception ex)
         {
-            Console.WriteLine(ex.ToString());
+            Console.Error.WriteLine(ex);
         }
         
+    }
+
+    private KeyValuePair<string, string> TransformAttribute(ulong id, KeyValuePair<string, string?> attr)
+    {
+        var name = attr.Key;
+        var value = attr.Value;
+
+        if (value == null)
+        {
+            _nodes[id].Attributes.Remove(name);
+        }
+        else
+        {
+            _nodes[id].Attributes[name] = value;
+        }
+
+        // style attribute
+        if (name.Contains("Style."))
+        {
+            var style = _nodes[id].HtmlStyle;
+
+            var propName = name.Split('.').Last();
+
+            var cssKey = GetCssProperty(propName);
+
+            if (value == null)
+            {
+                if (style.ContainsKey(cssKey))
+                {
+                    style.Remove(cssKey);
+                }
+            }
+            else
+            {
+                style[cssKey] = GetCssValue(cssKey, value);
+            }
+
+            var css = string.Join("", style.Select(s => $"{s.Key}: {s.Value};"));
+            return new KeyValuePair<string, string>("style", css);            
+        }
+        else
+        {
+            return attr;
+        }
     }
 
     static string GetCssValue(string key, string value)
@@ -214,6 +261,9 @@ public class CSXWebDom : IDOM
             or "max-width"
             or "max-width"
             or "font-size"
+            or "top"
+            or "left"
+            or "right"
             => value + "px",
 
             string k when k.Contains("color") => value,
@@ -327,16 +377,26 @@ public class CSXWebDom : IDOM
             // Text styles
             "Color" => "color",
             "FontSize" => "font-size",
+            "OverflowY" => "overflow-y",
 
             _ => throw new NotImplementedException("The style is not supported")
         };
     }
 
+    public void SetChildren(ulong id, ulong[] children)
+    {
+        CsxJsInterop.SetChildren(id.ToString(), JsonSerializer.Serialize(children));
+    }
+
+    public void SetElementText(ulong id, string text)
+    {
+        CsxJsInterop.SetElementText(id.ToString(), text);
+    }
 }
 
 internal class WebNode
 {
-    public Guid Id { get; set; }
+    public ulong Id { get; set; }
     public string? Name { get; set; }
     public Dictionary<string, string> HtmlStyle { get; set; } = new Dictionary<string, string>();
     public WebNode? Parent { get; set; }

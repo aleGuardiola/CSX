@@ -29,7 +29,7 @@ namespace CSX.NativeComponents
 
         IDisposable? _eventsSubscription;
 
-        protected override Guid OnInitialize(IDOM dom)
+        protected override ulong OnInitialize(IDOM dom)
         {            
             var elementId = dom.CreateElement(name);
 
@@ -54,10 +54,10 @@ namespace CSX.NativeComponents
 
         protected override void Render(IDOM dom)
         {
-            foreach (var propValue in GetPropertiesWithValues())
-            {
-                dom.SetAttributeIfDifferent(DOMElement, propValue.Name, propValue.Value);
-            }
+            dom.SetAttributesIfDifferent(DOMElement, GetPropertiesWithValues().Select(x => new KeyValuePair<string, string?>(x.Name, x.Value)));
+
+            dom.SetElementText(DOMElement, Props.Text);
+
         }
 
         IEnumerable<(string Name, string? Value)> GetPropertiesWithValues()
@@ -133,9 +133,6 @@ namespace CSX.NativeComponents
             yield return ($"Style.{nameof(ViewStyleProps.Top)}", Props.Style?.Top?.ToString());
             yield return ($"Style.{nameof(ViewStyleProps.Width)}", Props.Style?.Width?.ToString());
             yield return ($"Style.{nameof(ViewStyleProps.ZIndex)}", Props.Style?.ZIndex?.ToString());
-
-            // button text
-            yield return ("TextContent", Props.Text);
         }
 
         protected override void OnDestroy(IDOM dom)

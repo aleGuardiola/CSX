@@ -2,6 +2,7 @@
 using CSX.Rendering;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -79,25 +80,20 @@ namespace CSX.NativeComponents
     }
     public record TextProps : ViewProps<TextStyleProps>
     {
-        
+        public string Text { get; init; } = "";
     }
     public class Text : DOMComponent<TextProps>
-    {
-        const string name = "Text";
-        protected override Guid OnInitialize(IDOM dom)
+    {        
+        protected override ulong OnInitialize(IDOM dom)
         {
-            return dom.CreateElement(name);
+            return dom.CreateElement(nameof(Text));
         }
 
         protected override void Render(IDOM dom)
-        {            
-            foreach (var propValue in GetPropertiesWithValues())
-            {
-                dom.SetAttributeIfDifferent(DOMElement, propValue.Name, propValue.Value);                
-            }
-            
-            // text
-            dom.SetAttribute(DOMElement, "TextContent", (Children.FirstOrDefault() as StringComponent)?.Props.Value ?? "");
+        {
+            dom.SetAttributesIfDifferent(DOMElement, GetPropertiesWithValues().Select(x => new KeyValuePair<string, string?>(x.Name, x.Value)));
+
+            dom.SetElementText(DOMElement, Props.Text);
         }
 
         IEnumerable<(string Name, string? Value)> GetPropertiesWithValues()
@@ -173,8 +169,6 @@ namespace CSX.NativeComponents
             yield return ($"Style.{nameof(ViewStyleProps.Top)}", Props.Style?.Top?.ToString());
             yield return ($"Style.{nameof(ViewStyleProps.Width)}", Props.Style?.Width?.ToString());
             yield return ($"Style.{nameof(ViewStyleProps.ZIndex)}", Props.Style?.ZIndex?.ToString());
-
-
             // text styles
             yield return ($"Style.{nameof(TextStyleProps.Color)}", Props.Style?.Color?.ToString());
             yield return ($"Style.{nameof(TextStyleProps.FontFamily)}", Props.Style?.FontFamily?.ToString());

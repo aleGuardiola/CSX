@@ -1,5 +1,6 @@
 ﻿using CSX.Events;
 using CSX.Rendering;
+using System.Diagnostics;
 
 namespace CSX.Components
 {
@@ -30,7 +31,7 @@ namespace CSX.Components
 
         IReadOnlyCollection<IComponent> _children = new IComponent[0];
         public IReadOnlyCollection<IComponent> Children => _children;
-        public Guid DOMElement => RootComponent?.Component?.DOMElement ?? throw new InvalidOperationException("Component has not been initialized");
+        public ulong DOMElement => RootComponent?.Component?.DOMElement ?? throw new InvalidOperationException("Component has not been initialized");
 
         Element? RootComponent;
 
@@ -48,7 +49,7 @@ namespace CSX.Components
             }
 
             _props = props;
-            NotifyAndRender();
+            ReRender();            
         }
 
         public void SetChildren(IEnumerable<IComponent> children)
@@ -57,7 +58,9 @@ namespace CSX.Components
         }
 
         public void SetProps(object props)
-            => SetProps((TProps)props);
+        {
+            SetProps((TProps)props);            
+        }            
 
         public void SetState(TState state)
         {
@@ -67,7 +70,12 @@ namespace CSX.Components
             }
 
             _state = state;
-            NotifyAndRender();
+
+            
+            ReRender();            
+            
+
+            //NotifyAndRender();
         }
         
         public void Initialize(IDOM dom)
@@ -87,7 +95,7 @@ namespace CSX.Components
             }
 
             // first view render
-            NotifyAndRender();
+            ReRender();            
         }
 
         public void OnRender(Action handler)
@@ -95,6 +103,22 @@ namespace CSX.Components
             _onRenderHandler = handler;
         }
 
+        /// <summary>
+        /// Render this component in the DOM
+        /// </summary>
+        /// <exception cref="Exception"></exception>
+        public void ReRender()
+        {
+            var virtualDom = Render();
+            
+            RootComponent = ComponentFactory.UpdateTree(RootComponent, virtualDom, _serviceProvider ?? throw new Exception(), _dom ?? throw new Exception(), _onRenderHandler);            
+            RenderView(_dom);           
+        }
+
+        /// <summary>
+        /// Force the whole app to be re rendered
+        /// </summary>
+        /// <exception cref="Exception"></exception>
         public void NotifyAndRender()
         {
             var virtualDom = Render();
@@ -121,9 +145,16 @@ namespace CSX.Components
         }
 
         protected virtual void OnDestroy() { }        
-        protected abstract TState OnInitialize();
+        protected virtual TState OnInitialize()
+        {
+            return Activator.CreateInstance<TState>();
+        }
 
         protected abstract Element Render();
-        
+
+        public virtual bool ShouldRender()
+        {
+            return true;
+        }
     }
 }
