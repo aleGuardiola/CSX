@@ -8,27 +8,26 @@ using System.Threading.Tasks;
 
 namespace CSX.Components
 {
-    public abstract class DOMComponent<TProps> : EventDispatcherHandler, IComponent<TProps> where TProps : Props
+    public abstract class DOMComponent<TProps> : BaseComponent<TProps>, IComponent<TProps> where TProps : Props
     {
-        bool shoudRerender = false;
+        bool shoudRerender = true;
 
         protected Action? OnRenderHandler;
         TProps? _props;
-        public TProps Props => _props ?? throw new InvalidOperationException("Component has not been initialized");
-
-        Props IComponent.Props => Props;
+                
+        public override TProps Props => _props;
 
         IComponent[] _oldChildren = new IComponent[0];
         IComponent[] _children = new IComponent[0];
-        public IReadOnlyCollection<IComponent> Children => _children;
+        public override IReadOnlyCollection<IComponent> Children => _children;
         protected IReadOnlyCollection<IComponent> OldChildren => _oldChildren;
 
         IDOM? _dom;
 
         ulong _domElement;
-        public ulong DOMElement => _domElement;
-
-        public void SetProps(TProps props)
+        public override ulong DOMElement => _domElement;
+                
+        public override void SetProps(TProps props)
         {
             if (_props == null)
             {
@@ -45,7 +44,7 @@ namespace CSX.Components
             ReRender();
         }
 
-        public void SetChildren(IEnumerable<IComponent> children)
+        public override void SetChildren(IEnumerable<IComponent> children)
         {
             // Only re render when children have changed order or quantity
             var newChildren = children.ToArray();
@@ -70,18 +69,16 @@ namespace CSX.Components
             _children = newChildren;
         }
 
-        public void SetProps(object props)
+        public override void SetProps(object props)
             => SetProps((TProps)props);
 
-        public void Initialize(IDOM dom)
+        public override void Initialize(IDOM dom)
         {
             _dom = dom;
-            _domElement = OnInitialize(dom);
-            // first view render
-            ReRender();                 
+            _domElement = OnInitialize(dom);            
         }
 
-        public void OnRender(Action handler)
+        public override void OnRender(Action? handler)
         {
             OnRenderHandler = handler;
         }
@@ -96,25 +93,18 @@ namespace CSX.Components
             OnRenderHandler?.Invoke();
         }
         
-        public void SetServiceProvider(IServiceProvider serviceProvider) { }
+        public override void SetServiceProvider(IServiceProvider serviceProvider) { }
         
-        public void RenderView(IDOM dom)
+        public override void RenderView(IDOM dom)
         {
             Render(dom);
 
-            foreach (var child in Children)
-            {
-                if(child.ShouldRender())
-                {
-                    child.RenderView(dom);
-                }                
-            }
-            
             shoudRerender = false;
         }
 
-        public void Destroy(IDOM dom)
+        public override void Dispose(IDOM dom)
         {
+            base.Dispose(dom);
             OnDestroy(dom);
         }
 
@@ -122,7 +112,7 @@ namespace CSX.Components
         /// This method is only true when chilren have changed so it can safely be used to detect that
         /// </summary>
         /// <returns></returns>
-        public bool ShouldRender()
+        public override bool ShouldRender()
         {
             return shoudRerender;
         }
@@ -134,19 +124,12 @@ namespace CSX.Components
         protected void RenderChildren(IDOM dom)
         {
             // Not rendering children if they have not changes in theri order or types
-            if(!ShouldRender())
+            foreach(var child in Children.Where(x => x.ShouldRender()))
             {
-                return;
+                child.RenderView(_dom);
             }
 
-            // Remove old children
-            // dom.RemoveAllChildren(DOMElement);
-            dom.SetChildren(DOMElement, Children.Select(x => x.DOMElement).ToArray());
-            // Append new childs
-            //foreach (var child in Children)
-            //{                
-            //    dom.AppendChildIfNotAppended(DOMElement, child.DOMElement);
-            //}
+            dom.SetChildren(DOMElement, Children.Select(x => x.DOMElement).ToArray());            
         }
 
         protected abstract ulong OnInitialize(IDOM dom);

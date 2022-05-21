@@ -13,7 +13,7 @@ namespace CSX.Components
         }
     }
 
-    public abstract class Component<TState, TProps> : EventDispatcherHandler, IComponent<TProps> where TState : IEquatable<TState>
+    public abstract class Component<TState, TProps> : BaseComponent<TProps> where TState : IEquatable<TState>
                                                                                                  where TProps : Props
     {
         IDOM? _dom;
@@ -25,17 +25,16 @@ namespace CSX.Components
         public TState State => _state ?? throw new InvalidOperationException("Component has not been initialized");
 
         TProps? _props;
-        public TProps Props => _props ?? throw new InvalidOperationException("Component has not been initialized");
-
-        Props IComponent.Props => Props;
+        public override TProps Props => _props;
 
         IReadOnlyCollection<IComponent> _children = new IComponent[0];
-        public IReadOnlyCollection<IComponent> Children => _children;
-        public ulong DOMElement => RootComponent?.Component?.DOMElement ?? throw new InvalidOperationException("Component has not been initialized");
+        public override IReadOnlyCollection<IComponent> Children => _children;
+        public override ulong DOMElement => RootComponent?.Component?.DOMElement ?? throw new InvalidOperationException("Component has not been initialized");
+        bool _componentRendered = false;
 
         Element? RootComponent;
 
-        public void SetProps(TProps props)
+        public override void SetProps(TProps props)
         {            
             if(_props == null)
             {
@@ -52,12 +51,12 @@ namespace CSX.Components
             ReRender();            
         }
 
-        public void SetChildren(IEnumerable<IComponent> children)
+        public override void SetChildren(IEnumerable<IComponent> children)
         {
             _children = children.ToList().AsReadOnly();
         }
 
-        public void SetProps(object props)
+        public override void SetProps(object props)
         {
             SetProps((TProps)props);            
         }            
@@ -70,15 +69,16 @@ namespace CSX.Components
             }
 
             _state = state;
-
             
-            ReRender();            
-            
+            if(_componentRendered)
+            {
+                ReRender();
+            }            
 
             //NotifyAndRender();
         }
         
-        public void Initialize(IDOM dom)
+        public override void Initialize(IDOM dom)
         {
             _dom = dom;
             
@@ -95,10 +95,10 @@ namespace CSX.Components
             }
 
             // first view render
-            ReRender();            
+            // ReRender();            
         }
 
-        public void OnRender(Action handler)
+        public override void OnRender(Action? handler)
         {
             _onRenderHandler = handler;
         }
@@ -108,10 +108,7 @@ namespace CSX.Components
         /// </summary>
         /// <exception cref="Exception"></exception>
         public void ReRender()
-        {
-            var virtualDom = Render();
-            
-            RootComponent = ComponentFactory.UpdateTree(RootComponent, virtualDom, _serviceProvider ?? throw new Exception(), _dom ?? throw new Exception(), _onRenderHandler);            
+        {                     
             RenderView(_dom);           
         }
 
@@ -126,15 +123,28 @@ namespace CSX.Components
 
             _onRenderHandler?.Invoke();
         }
-        public void SetServiceProvider(IServiceProvider serviceProvider)
+        public override void SetServiceProvider(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
         }
-        public void RenderView(IDOM dom)
+        public override void RenderView(IDOM dom)
         {
+            var virtualDom = Render();
+            
+            // Update Tree
+            RootComponent = ComponentFactory.UpdateTree(RootComponent, virtualDom, _serviceProvider ?? throw new Exception(), _dom ?? throw new Exception(), _onRenderHandler);
+            // Render Children                       
+
             RootComponent?.Component?.RenderView(dom);
+
+            if(!_componentRendered)
+            {
+                OnViewInit();
+                _componentRendered = true;
+            }
+
         }
-        public void Destroy(IDOM dom)
+        public override void Dispose(IDOM dom)
         {
             if (RootComponent != null)
             {
@@ -150,9 +160,14 @@ namespace CSX.Components
             return Activator.CreateInstance<TState>();
         }
 
+        protected virtual void OnViewInit()
+        {
+
+        }
+
         protected abstract Element Render();
 
-        public virtual bool ShouldRender()
+        public override bool ShouldRender()
         {
             return true;
         }

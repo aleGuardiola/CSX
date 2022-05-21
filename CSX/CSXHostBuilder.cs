@@ -129,14 +129,18 @@ namespace CSX
                 sw.Start();
 
                 // create root component and append it to the dom
-                ComponentFactory.CreateComponent(RootComponentElement, Services, dom, onRender, appendToDom: true);
+                ComponentFactory.CreateComponent(RootComponentElement, Services, dom, onRender, appendToDom: false);
+
+                // first render
+                RootComponentElement.Component?.RenderView(dom);
+                dom.AppendToDom(RootComponentElement.Component);
 
                 sw.Stop();
-                Console.WriteLine("First Render Time {0}", sw.ElapsedMilliseconds);
+                Console.WriteLine("First Render Time {0}ms", sw.ElapsedMilliseconds);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.Error.WriteLine(ex);
                 throw;
             }
             

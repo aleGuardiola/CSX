@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CSX.Events
 {
-    public class EventArgs
+    public class CSXEventArgs
     {
         
     }

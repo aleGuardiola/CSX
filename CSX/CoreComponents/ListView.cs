@@ -11,13 +11,14 @@ namespace CSX.CoreComponents
 {
     public record ListViewProps<TData> : ScrollViewProps
     {
+        public float PreRenderCount = 2;
         public TData[] Data { get; init; } = new TData[0];
-        public double RowHeight { get; init; } = 0;
+        public float RowHeight { get; init; } = 0;
         public Func<TData, Element>? RenderItem { get; init;}
     }
     public record ListViewState
     {
-        public double ScrollY { get; init; } = 0;
+        public float ScrollY { get; init; } = 0;
     }
     public class ListView<TData> : Component<ListViewState, ListViewProps<TData>>
     {
@@ -29,7 +30,7 @@ namespace CSX.CoreComponents
         protected override Element Render()
         {
             var rowHeight = Props.RowHeight;
-            var nodePadding = 20;
+            var nodePadding = Props.PreRenderCount;
             var itemCount = Props.Data.Length;
             var viewportHeight = Props.Style?.Height ?? 0;
 

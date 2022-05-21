@@ -101,6 +101,9 @@ namespace CSX.Rendering
 
         // Image
         ResizeMode,
-        Source
+        Source,
+
+        // Scroll View
+        ScrollPosition
     }
 }

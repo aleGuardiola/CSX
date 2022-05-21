@@ -7,149 +7,201 @@ using WebAssembly.JSInterop;
 
 namespace CSX.Web
 {
-    public static class CsxJsInterop
+    internal class CsxJsInterop : JSModuleInterop
     {
-        static Action<Event>? _handler;
-
-        public static void CreateElement(string tag, string id)
+        static CsxJsInterop _current;
+        public static CsxJsInterop Current => _current;
+        static CsxJsInterop()
         {
-            var callInfo = new JSCallInfo()
-            {
-                FunctionIdentifier = nameof(CreateElement),
-                ResultType = JSCallResultType.JSVoidResult,
-                TargetInstanceId = 0,
-            };
-
-            InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, tag, id, null);
-
-            if (exception != null)
-            {
-                Console.WriteLine(exception);
-            }
+            _current = new CsxJsInterop();
+            _current.ImportModule();
         }
 
-        public static void RemoveElement(string id)
-        {
-            var callInfo = new JSCallInfo()
-            {
-                FunctionIdentifier = nameof(RemoveElement),
-                ResultType = JSCallResultType.JSVoidResult,
-                TargetInstanceId = 0,
-            };
+        public CsxJsInterop() : base("CSX") { }
+        
+        static Action<WebEvent>? _handler;
 
-            InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, null, null);
-            if (exception != null)
-            {
-                Console.WriteLine(exception);
-            }
+        public void CreateElement(string tag, ulong id)
+        {
+            Console.WriteLine(nameof(CreateElement));
+
+            Invoke(nameof(CreateElement), tag, id);
+
+            //var callInfo = new JSCallInfo()
+            //{
+            //    FunctionIdentifier = "CSX." + nameof(CreateElement),
+            //    ResultType = JSCallResultType.JSVoidResult,
+            //    TargetInstanceId = 0,
+            //};
+
+
+
+            //InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, tag, id, null);
+
+            //if (exception != null)
+            //{
+            //    Console.Error.WriteLine(exception);
+            //    throw new Exception(exception);
+            //}
         }
 
-        public static void DestroyElement(string id)
+        public void RemoveElement(ulong id)
         {
-            var callInfo = new JSCallInfo()
-            {
-                FunctionIdentifier = nameof(DestroyElement),
-                ResultType = JSCallResultType.JSVoidResult,
-                TargetInstanceId = 0,
-            };
+            Console.WriteLine(nameof(RemoveElement));
 
-            InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, null, null);
-            if (exception != null)
-            {
-                Console.WriteLine(exception);
-            }
+            Invoke(nameof(RemoveElement), id);
+
+            //var callInfo = new JSCallInfo()
+            //{
+            //    FunctionIdentifier = "CSX." + nameof(RemoveElement),
+            //    ResultType = JSCallResultType.JSVoidResult,
+            //    TargetInstanceId = 0,
+            //};
+
+            //InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, null, null);
+            //if (exception != null)
+            //{
+            //    Console.Error.WriteLine(exception);
+            //    throw new Exception(exception);
+            //}
         }
 
-
-        public static void SetElementAttribute(string id, string name, string value)
+        public void DestroyElement(ulong id)
         {
-            var callInfo = new JSCallInfo()
-            {
-                FunctionIdentifier = nameof(SetElementAttribute),
-                ResultType = JSCallResultType.JSVoidResult,
-                TargetInstanceId = 0,
-            };
+            Console.WriteLine(nameof(DestroyElement));
 
-            InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, name, value);
-            if (exception != null)
-            {
-                Console.WriteLine(exception);
-            }
-        }
+            Invoke(nameof(DestroyElement), id);
 
+            //var callInfo = new JSCallInfo()
+            //{
+            //    FunctionIdentifier = "CSX." + nameof(DestroyElement),
+            //    ResultType = JSCallResultType.JSVoidResult,
+            //    TargetInstanceId = 0,
+            //};
 
-        public static void AttachElement(string parentId, string id)
-        {
-            var callInfo = new JSCallInfo()
-            {
-                FunctionIdentifier = nameof(AttachElement),
-                ResultType = JSCallResultType.JSVoidResult,
-                TargetInstanceId = 0,
-            };
-
-            InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, parentId, id, null);
-            if (exception != null)
-            {
-                Console.WriteLine(exception);
-            }
+            //InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, null, null);
+            //if (exception != null)
+            //{
+            //    Console.Error.WriteLine(exception);
+            //    throw new Exception(exception);
+            //}
         }
 
 
-        public static void SetElementText(string id, string text)
+        public void SetElementAttribute(ulong id, string name, string value)
         {
-            var callInfo = new JSCallInfo()
-            {
-                FunctionIdentifier = nameof(SetElementText),
-                ResultType = JSCallResultType.JSVoidResult,
-                TargetInstanceId = 0,
-            };
+            Console.WriteLine(nameof(SetElementAttribute));
 
-            InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, text, null);
-            if (exception != null)
-            {
-                Console.WriteLine(exception);
-            }
+            Invoke(nameof(SetElementAttribute), id, name, value);
+
+            //var callInfo = new JSCallInfo()
+            //{
+            //    FunctionIdentifier = "CSX." + nameof(SetElementAttribute),
+            //    ResultType = JSCallResultType.JSVoidResult,
+            //    TargetInstanceId = 0,
+            //};
+
+            //InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, name, value);
+            //if (exception != null)
+            //{
+            //    Console.Error.WriteLine(exception);
+            //    throw new Exception(exception);
+            //}
         }
 
-        public static void SetChildren(string id, string childrenJson)
-        {
-            var callInfo = new JSCallInfo()
-            {
-                FunctionIdentifier = nameof(SetChildren),
-                ResultType = JSCallResultType.JSVoidResult,
-                TargetInstanceId = 0,
-            };
 
-            InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, childrenJson, null);
-            if (exception != null)
-            {
-                Console.WriteLine(exception);
-            }
+        public void AttachElement(ulong parentId, ulong id)
+        {
+            Console.WriteLine(nameof(SetElementAttribute));
+
+            Invoke(nameof(SetElementAttribute), parentId, id);
+
+            //var callInfo = new JSCallInfo()
+            //{
+            //    FunctionIdentifier = "CSX." + nameof(AttachElement),
+            //    ResultType = JSCallResultType.JSVoidResult,
+            //    TargetInstanceId = 0,
+            //};
+
+            //InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, parentId, id, null);
+            //if (exception != null)
+            //{
+            //    Console.Error.WriteLine(exception);
+            //    throw new Exception(exception);
+            //}
         }
 
-        public static void SetElementAttributes(string id, string attrs)
-        {
-            var callInfo = new JSCallInfo()
-            {
-                FunctionIdentifier = nameof(SetElementAttributes),
-                ResultType = JSCallResultType.JSVoidResult,
-                TargetInstanceId = 0,
-            };
 
-            InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, attrs, null);
-            if (exception != null)
-            {
-                Console.WriteLine(exception);
-            }
+        public void SetElementText(ulong id, string text)
+        {
+            Console.WriteLine(nameof(SetElementText));
+
+            Invoke(nameof(SetElementText), id, text);
+
+            //var callInfo = new JSCallInfo()
+            //{
+            //    FunctionIdentifier = "CSX." + nameof(SetElementText),
+            //    ResultType = JSCallResultType.JSVoidResult,
+            //    TargetInstanceId = 0,
+            //};
+
+            //InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, text, null);
+            //if (exception != null)
+            //{
+            //    Console.Error.WriteLine(exception);
+            //    throw new Exception(exception);
+            //}
         }
 
-        public static void SetEventHandler(Action<Event> handler)
+        public void SetChildren(ulong id, string childrenCommaSeparated)
+        {
+            Console.WriteLine(nameof(SetElementText));
+
+            Invoke(nameof(SetElementText), id, childrenCommaSeparated);
+
+            //var callInfo = new JSCallInfo()
+            //{
+            //    FunctionIdentifier = "CSX." + nameof(SetChildren),
+            //    ResultType = JSCallResultType.JSVoidResult,
+            //    TargetInstanceId = 0,
+            //};
+
+            //InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, childrenCommaSeparated, null);
+            //if (exception != null)
+            //{
+            //    Console.Error.WriteLine(exception);
+            //    throw new Exception(exception);
+            //}
+        }
+
+        public void SetElementAttributes(ulong id, string attrs)
+        {
+            Console.WriteLine(nameof(SetElementAttributes));
+
+            Invoke(nameof(SetElementAttributes), id, attrs);
+
+            //var callInfo = new JSCallInfo()
+            //{
+            //    FunctionIdentifier = "CSX." + nameof(SetElementAttributes),                
+            //    ResultType = JSCallResultType.JSVoidResult,
+            //    TargetInstanceId = 0,
+            //};
+
+            //InternalCalls.InvokeJS<string, string, string, string>(out var exception, ref callInfo, id, attrs, null);
+            //if (exception != null)
+            //{
+            //    Console.Error.WriteLine(exception);
+            //    throw new Exception(exception);
+            //}
+        }
+
+        public static void SetEventHandler(Action<WebEvent> handler)
         {
             _handler = handler;
         }
 
         [JSInvokable]
-        public static void OnEvent(Event @event)
+        public static void OnEvent(WebEvent @event)
         {
             if (_handler == null)
             {
@@ -185,6 +237,61 @@ namespace WebAssembly.JSInterop
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern TRes InvokeJS<T0, T1, T2, TRes>(out string exception, ref JSCallInfo callInfo, [AllowNull] T0 arg0, [AllowNull] T1 arg1, [AllowNull] T2 arg2);
+
+        public static void InvokeVoid<T, T1, T2>(string methodIdentifier, T arg, T1 arg1, T2 arg2)
+        {
+            var callInfo = new JSCallInfo()
+            {
+                FunctionIdentifier = methodIdentifier,
+                ResultType = JSCallResultType.JSVoidResult,
+                TargetInstanceId = 0,
+            };
+
+            InvokeJS<T, T1, T2, object>(out var exception, ref callInfo, arg, arg1, arg2);
+            if (exception != null)
+            {
+                Console.Error.WriteLine("Error calling js {0}", methodIdentifier);
+                Console.Error.WriteLine(exception);
+                throw new Exception(exception);
+            }
+        }
+
+        public static TR Invoke<TR, T, T1, T2>(string methodIdentifier, T arg, T1 arg1, T2 arg2)
+        {
+            JSCallResultType resultType;
+
+            if (typeof(IJSUnmarshalledObjectReference).IsAssignableFrom(typeof(TR)))
+            {
+                resultType = JSCallResultType.JSObjectReference;
+            }
+            else if(typeof(IJSStreamReference).IsAssignableFrom(typeof(TR)))
+            {
+                resultType = JSCallResultType.JSStreamReference;
+            }
+            else
+            {
+                resultType = JSCallResultType.Default;
+            }
+
+            var callInfo = new JSCallInfo()
+            {
+                FunctionIdentifier = methodIdentifier,
+                ResultType = resultType,
+                TargetInstanceId = 0,
+            };
+
+            var result = InvokeJS<T, T1, T2, TR>(out var exception, ref callInfo, arg, arg1, arg2);
+            if (exception != null)
+            {
+                Console.Error.WriteLine("Error calling js {0}", methodIdentifier);
+                Console.Error.WriteLine(exception);
+                throw new Exception(exception);
+            }
+
+            return result;
+        }
+            
+
     }
 
     [StructLayout(LayoutKind.Explicit, Pack = 4)]

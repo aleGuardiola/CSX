@@ -13,7 +13,7 @@ namespace CSX.Rendering
         public IObservable<Event> Events { get; }
         Func<ulong> NewId;
 
-        Dictionary<ulong, MemoryNode> Nodes = new Dictionary<ulong, MemoryNode>()
+        public Dictionary<ulong, MemoryNode> Nodes = new Dictionary<ulong, MemoryNode>()
         {
             { RootId, new MemoryNode(RootId, NativeElement.Root) }
         };

@@ -8,11 +8,14 @@ namespace CSX.Rendering
 {
     public enum NativeElement
     {
+        Root,
+
         View,
         Button,
         Image,
         ScrollView,
         Text,
-        TextInput
+        TextInput,
+        SkiaCanvas
     }
 }

@@ -23,7 +23,7 @@ namespace CSX.Components
             }            
         }
 
-        public static void SetAttributeIfDifferent(this IDOM dom, ulong element, string name, string? value)
+        public static void SetAttributeIfDifferent(this IDOM dom, ulong element, NativeAttribute name, object? value)
         {
             var domValue = dom.GetAttribute(element, name);
             if (domValue != value)
@@ -32,7 +32,7 @@ namespace CSX.Components
             }
         }
 
-        public static void SetAttributesIfDifferent(this IDOM dom, ulong element, IEnumerable<KeyValuePair<string, string?>> attributes)
+        public static void SetAttributesIfDifferent(this IDOM dom, ulong element, IEnumerable<KeyValuePair<NativeAttribute, object?>> attributes)
         {
             var filtered = attributes.Where(x => dom.GetAttribute(element, x.Key) != x.Value).ToArray();
             dom.SetAttributes(element, filtered);
@@ -58,7 +58,7 @@ namespace CSX.Components
         public static Element UpdateTree(Element? current, Element @new, IServiceProvider serviceProvider, IDOM dom, Action? onRender)
         {
             //var sw = Stopwatch.StartNew();
-            // sw.Start();
+            //sw.Start();
 
             if (current == null)
             {
@@ -70,6 +70,7 @@ namespace CSX.Components
             {
                 DestroyComponent(current, dom);
                 CreateComponent(@new, serviceProvider, dom, onRender);
+
                 return @new;
             }
                         
@@ -140,7 +141,10 @@ namespace CSX.Components
         }
 
         public static void CreateComponent(Element virtualComponent, IServiceProvider serviceProvider, IDOM dom, Action? onRender, bool appendToDom = false)
-        {            
+        {
+            //var sw = Stopwatch.StartNew();
+            //sw.Start();
+
             // construct component
             var component = (IComponent)(serviceProvider.GetService(virtualComponent.Type) ?? throw new Exception("Could not create component"));
 
@@ -148,7 +152,7 @@ namespace CSX.Components
             component.SetProps(virtualComponent.Props);
             
             component.OnRender(onRender);
-            component.Initialize(dom);            
+            component.Initialize(dom);
             virtualComponent.Component = component;
 
             if(appendToDom)
@@ -162,6 +166,9 @@ namespace CSX.Components
             }
 
             component.SetChildren(virtualComponent.Children.Select(x => x.Component ?? throw new Exception("Could not create component")));
+
+            //sw.Stop();
+            //Console.WriteLine("Create Component took: {0}ms", sw.ElapsedMilliseconds);
         }
 
         public static void DestroyComponent(Element component, IDOM dom)
@@ -171,7 +178,7 @@ namespace CSX.Components
                 DestroyComponent(child, dom);                
             }           
 
-            component.Component?.Destroy(dom);            
+            component.Component?.Dispose(dom);            
         }
         
     }

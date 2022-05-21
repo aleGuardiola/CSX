@@ -1,96 +1,59 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using CSX.Components;
+
+
+using BlazorApp1;
+using Castle.DynamicProxy;
+using CSX;
 using CSX.Lab;
-using CSX.NativeComponents;
-using Microsoft.Extensions.DependencyInjection;
-using System.Xml;
-using System.Linq;
+using CSX.Rendering;
+using System.Reactive.Subjects;
 using System.Reflection;
-using Microsoft.AspNetCore.Components;
 
-Console.WriteLine("Hello, World!");
+ulong id = 1;
+var realDom = new MemoryDom(new Subject<Event>(), () => id++);
 
-var serviceCollection = new ServiceCollection();
+var averages = new Dictionary<string, Average>();
 
-serviceCollection.AddTransient<ComponentTest>();
-serviceCollection.AddTransient<Text>();
-serviceCollection.AddTransient<StringComponent>();
-serviceCollection.AddTransient<View>();
+var proxy = new ProxyGenerator()
+   .CreateInterfaceProxyWithTarget<IDOM>(realDom, new StopwatchInterceptor(averages));
 
-var provider = serviceCollection.BuildServiceProvider();
+//var dom = new WebDom();
 
-var dom = new MemoryDOM();
+await CSXHostBuilder.Create(args, proxy)
+    .ConfigureServices((context, services) =>
+    {
+        services.AddAssemblyComponents(Assembly.GetExecutingAssembly());
+    })
+    .Build()
+    .StartAsync<ComponentTest, TestProps>(new() { Name = "Alejandro", LastName = "Guardiola" });
 
-var virtualThing = ComponentFactory.CreateElement<ComponentTest, TestProps>(new() { Name = "Alejandr", LastName = "Guardiola" }, new List<CSX.Components.Element>());
-
-ComponentFactory.CreateComponent(virtualThing, provider, dom);
-
-var component = virtualThing.Component ?? throw new Exception("Component is null");
-
-dom.AppendToDom(component);
-
-component.RenderView(dom);
-
-ComponentFactory.DestroyComponent(virtualThing, dom);
+Console.WriteLine($"Total elements: {realDom.Nodes.Count - 1}");
+Console.WriteLine($"Total Dom time: {averages.Sum(x => x.Value.Sum()) / TimeSpan.TicksPerMillisecond}ms");
+Console.WriteLine("-----------------------------------------------");
+Console.WriteLine("-----------------------------------------------");
 
 
+foreach (var average in averages)
+{
+    var methodName = average.Key;
+    var thicks = average.Value.GetAverageTicks();
+    var milliseconds = average.Value.GetAverageMilliseconds();
 
-//var xml = @"
-//<View Style='@ new(){BackgroundColor = State.ContentColor}'>
-//    <Text>Hello, World!</Text>
-//</View>
-//";
+    Console.WriteLine($"Method {methodName} time:");
 
-//XmlDocument xmlDoc = new XmlDocument();
-//xmlDoc.LoadXml(xml);
+    Console.WriteLine($"Average {thicks}thicks");
+    Console.WriteLine($"Average {milliseconds}ms");
 
-//if (xmlDoc.ChildNodes.Count > 1)
-//{
-//    throw new InvalidOperationException("A component can only have one root component");
-//}
+    Console.WriteLine();
 
-//var root = xmlDoc.ChildNodes.Item(0);
+    Console.WriteLine($"Total {average.Value.GetTotalThicks()}thicks");
+    Console.WriteLine($"Total {average.Value.GetTotalMilliseconds()}ms");
 
-//var propsNameResolver = (string n) => {
+    Console.WriteLine();
 
-//    var assemblies = new Assembly[] { typeof(View).Assembly, typeof(MemoryDOM).Assembly };
-//    var type = assemblies.SelectMany(a => a.GetTypes()).FirstOrDefault(t => t.Name == n);
+    Console.WriteLine($"Total calls {average.Value.Count}");
 
-//    var propType = type.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.Name.Contains("IComponent")).GetGenericArguments().First();
+    Console.WriteLine("-----------------------------------------------");
+}
 
-//    var name = propType.Name;
-//    var properties = propType.GetProperties();
-
-//    return new ObjectValueType(name, properties.Select(x => new ValuePropertySchema(x.Name, new ValueType(x.PropertyType.Name))).ToList()).Name;
-//};
-
-//var csharpCode = CsxCompiler.ToCSharp(root, propsNameResolver);
-
-//string AttributesToCSharp()
-
-//var razor = new ComponentTestRazor();
-//var str = razor.GenerateString();
-//Console.WriteLine(str);
-
-//public record ValueType(string Name);
-//public record ObjectValueType(string Name, List<ValuePropertySchema> properties) : ValueType(Name);
-//public record ListValueType(string Name, ValueType type) : ValueType(Name);
-//public record ValuePropertySchema(string Name, ValueType Type);
-
-
-//RenderFragment renderFragment;
-//renderFragment = b =>
-//{
-//    b.OpenComponent(1, typeof(View));
-//    b.AddAttribute(2, "Style", new { BackgroundColor = "red" });
-//    b.CloseComponent();    
-//};
-
-//var tree = new Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder();
-
-//renderFragment.Invoke(tree);
-
-
-
-Console.Read();
-
+Console.ReadKey();

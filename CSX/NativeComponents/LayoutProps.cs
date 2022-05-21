@@ -1,10 +1,11 @@
 ﻿using CSX.Components;
+using CSX.Rendering;
 
 namespace CSX.NativeComponents
 {
     public enum AlignContent
     {
-        FlexStart,
+        FlexStart = 0,
         FlexEnd,
         Center,
         Stretch,
@@ -13,7 +14,7 @@ namespace CSX.NativeComponents
     }
     public enum AlignItems
     {
-        FlexStart,
+        FlexStart = 0,
         FlexEnd,
         Center,
         Stretch,
@@ -22,7 +23,7 @@ namespace CSX.NativeComponents
 
     public enum AlignSelf
     {
-        Auto,
+        Auto = 0,
         FlexStart,
         FlexEnd,
         Center,
@@ -32,32 +33,32 @@ namespace CSX.NativeComponents
 
     public enum Direction
     { 
-        Inherit,
+        Inherit = 0,
         Ltr,
         Rtl
     }
 
     public enum Display
     {
-        Flex,
+        Flex = 0,
         None
     }
     public enum FlexDirection
     {
-        Row,
+        Row = 0,
         RowReverse,
         Column,
         ColumnReverse
     }    
     public enum FlexWrap
     {
-        NoWrap,
+        NoWrap = 0,
         Wrap,
         WrapReverse
     }
     public enum JustifyContent
     {
-        FlexStart,
+        FlexStart = 0,
         FlexEnd,
         Center,
         SpaceBetween,
@@ -66,62 +67,153 @@ namespace CSX.NativeComponents
     }
     public enum Overflow
     {
-        Visible,
+        Visible = 0,
         Hidden,
         Scroll
     }
     public enum Position
     {        
-        Relative,
+        Relative = 0,
         Absolute     
     }
     public record LayoutStyleProps : Props
     {
+        [NativeAttribute(NativeAttribute.AlignContent)]
         public AlignContent? AlignContent { get; init; } = NativeComponents.AlignContent.FlexStart;
+
+        [NativeAttribute(NativeAttribute.AlignItems)]
         public AlignItems? AlignItems { get; init; }
+
+        [NativeAttribute(NativeAttribute.AlignSelf)]
         public AlignSelf? AlignSelf { get; init; }
-        public double? AspectRatio { get; init; }
-        public double? Bottom { get; init; }
+
+        [NativeAttribute(NativeAttribute.AspectRatio)]
+        public float? AspectRatio { get; init; }
+
+        [NativeAttribute(NativeAttribute.Bottom)]
+        public float? Bottom { get; init; }
+
+        [NativeAttribute(NativeAttribute.Direction)]
         public Direction? Direction { get; init; }
+
+        [NativeAttribute(NativeAttribute.Display)]
         public Display? Display { get; init; }
-        public double? End { get; init; }
-        public double? Flex { get; init; }
-        public double? FlexBasis { get; init; }
+
+        [NativeAttribute(NativeAttribute.End)]
+        public float? End { get; init; }
+
+        [NativeAttribute(NativeAttribute.Flex)]
+        public float? Flex { get; init; }
+
+        [NativeAttribute(NativeAttribute.FlexBasis)]
+        public float? FlexBasis { get; init; }
+
+        [NativeAttribute(NativeAttribute.FlexDirection)]
         public FlexDirection? FlexDirection { get; init; } = NativeComponents.FlexDirection.Column;
-        public double? FlexGrow { get; init; }
-        public double? FlexShrink { get; init; } = 0;
+
+        [NativeAttribute(NativeAttribute.FlexGrow)]
+        public float? FlexGrow { get; init; }
+
+        [NativeAttribute(NativeAttribute.FlexShrink)]
+        public float? FlexShrink { get; init; } = 0;
+
+        [NativeAttribute(NativeAttribute.FlexWrap)]
         public FlexWrap? FlexWrap { get; init; }
-        public double? Height { get; init; }
+
+        [NativeAttribute(NativeAttribute.Height)]
+        public float? Height { get; init; }
+
+        [NativeAttribute(NativeAttribute.JustifyContent)]
         public JustifyContent? JustifyContent { get; init; }
-        public double? Left { get; init; }
-        public double? Margin { get; init; }
-        public double? MarginBottom { get; init; }
-        public double? MarginEnd { get; init; }
-        public double? MarginHorizontal { get; init; }
-        public double? MarginLeft { get; init; }
-        public double? MarginRight { get; init; }
-        public double? MarginStart { get; init; }
-        public double? MarginTop { get; init; }
-        public double? MarginVertical { get; init; }
-        public double? MaxHeight { get; init; }
-        public double? MaxWidth { get; init; }
-        public double? MinHeight { get; init; }
-        public double? MinWidth { get; init; }
+
+        [NativeAttribute(NativeAttribute.Left)]
+        public float? Left { get; init; }
+
+        [NativeAttribute(NativeAttribute.Margin)]
+        public float? Margin { get; init; }
+
+        [NativeAttribute(NativeAttribute.MarginBottom)]
+        public float? MarginBottom { get; init; }
+
+        [NativeAttribute(NativeAttribute.MarginEnd)]
+        public float? MarginEnd { get; init; }
+
+        [NativeAttribute(NativeAttribute.MarginHorizontal)]
+        public float? MarginHorizontal { get; init; }
+
+        [NativeAttribute(NativeAttribute.MarginLeft)]
+        public float? MarginLeft { get; init; }
+
+        [NativeAttribute(NativeAttribute.MarginRight)]
+        public float? MarginRight { get; init; }
+
+        [NativeAttribute(NativeAttribute.MarginStart)]
+        public float? MarginStart { get; init; }
+
+        [NativeAttribute(NativeAttribute.MarginTop)]
+        public float? MarginTop { get; init; }
+
+        [NativeAttribute(NativeAttribute.MarginVertical)]
+        public float? MarginVertical { get; init; }
+
+        [NativeAttribute(NativeAttribute.MaxHeight)]
+        public float? MaxHeight { get; init; }
+
+        [NativeAttribute(NativeAttribute.MaxWidth)]
+        public float? MaxWidth { get; init; }
+
+        [NativeAttribute(NativeAttribute.MinHeight)]
+        public float? MinHeight { get; init; }
+
+        [NativeAttribute(NativeAttribute.MinWidth)]
+        public float? MinWidth { get; init; }
+
+        [NativeAttribute(NativeAttribute.Overflow)]
         public Overflow? Overflow { get; init; }
-        public double? Padding { get; init; }
-        public double? PaddingBottom { get; init; }
-        public double? PaddingEnd { get; init; }
-        public double? PaddingHorizontal { get; init; }
-        public double? PaddingLeft { get; init; }
-        public double? PaddingRight { get; init; }
-        public double? PaddingStart { get; init; }
-        public double? PaddingTop { get; init; }
-        public double? PaddingVertical { get; init; }
+
+        [NativeAttribute(NativeAttribute.Padding)]
+        public float? Padding { get; init; }
+
+        [NativeAttribute(NativeAttribute.PaddingBottom)]
+        public float? PaddingBottom { get; init; }
+
+        [NativeAttribute(NativeAttribute.PaddingEnd)]
+        public float? PaddingEnd { get; init; }
+
+        [NativeAttribute(NativeAttribute.PaddingHorizontal)]
+        public float? PaddingHorizontal { get; init; }
+
+        [NativeAttribute(NativeAttribute.PaddingLeft)]
+        public float? PaddingLeft { get; init; }
+
+        [NativeAttribute(NativeAttribute.PaddingRight)]
+        public float? PaddingRight { get; init; }
+
+        [NativeAttribute(NativeAttribute.PaddingStart)]
+        public float? PaddingStart { get; init; }
+
+        [NativeAttribute(NativeAttribute.PaddingTop)]
+        public float? PaddingTop { get; init; }
+
+        [NativeAttribute(NativeAttribute.PaddingVertical)]
+        public float? PaddingVertical { get; init; }
+
+        [NativeAttribute(NativeAttribute.Position)]
         public Position? Position { get; init; }
-        public double? Right { get; init; }
-        public double? Start { get; init; }
-        public double? Top { get; init; }
-        public double? Width { get; init; }
-        public double? ZIndex { get; init; }
+
+        [NativeAttribute(NativeAttribute.Right)]
+        public float? Right { get; init; }
+
+        [NativeAttribute(NativeAttribute.Start)]
+        public float? Start { get; init; }
+
+        [NativeAttribute(NativeAttribute.Top)]
+        public float? Top { get; init; }
+
+        [NativeAttribute(NativeAttribute.Width)]
+        public float? Width { get; init; }
+
+        [NativeAttribute(NativeAttribute.ZIndex)]
+        public float? ZIndex { get; init; }
     }
 }

@@ -1,24 +1,73 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.JSInterop" Version="6.0.4" />
-    <PackageReference Include="Microsoft.JSInterop.WebAssembly" Version="6.0.4" />
-    <PackageReference Include="System.Reactive" Version="5.0.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="scripts\createElement - Copy.js" />
+		<None Remove="scripts\createElement - Copy.js.map" />
+		<None Remove="scripts\removeElement - Copy (2).js" />
+		<None Remove="scripts\removeElement - Copy (2).js.map" />
+		<None Remove="scripts\removeElement - Copy (3).js" />
+		<None Remove="scripts\removeElement - Copy (3).js.map" />
+		<None Remove="scripts\removeElement - Copy (4).js" />
+		<None Remove="scripts\removeElement - Copy (4).js.map" />
+		<None Remove="scripts\removeElement - Copy - Copy.js" />
+		<None Remove="scripts\removeElement - Copy - Copy.js.map" />
+		<None Remove="scripts\removeElement - Copy.js" />
+		<None Remove="scripts\removeElement - Copy.js.map" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="scripts\attachElement.js" />
+		<Content Include="scripts\attachElement.js.map" />
+		<Content Include="scripts\setChildren.js" />
+		<Content Include="scripts\setChildren.js.map" />
+		<Content Include="scripts\destroyElement.js" />
+		<Content Include="scripts\destroyElement.js.map" />
+		<Content Include="scripts\elementAttributes.js" />
+		<Content Include="scripts\elementAttributes.js.map" />
+		<Content Include="scripts\setElementText.js" />
+		<Content Include="scripts\setElementText.js.map" />
+		<Content Include="scripts\removeElement.js" />
+		<Content Include="scripts\removeElement.js.map" />
+		<Content Include="scripts\createElement.js" />
+		<Content Include="scripts\createElement.js.map" />
+		<Content Include="scripts\elements.js" />
+		<Content Include="scripts\elements.js.map" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="6.0.4" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.4" />
+		<PackageReference Include="Microsoft.TypeScript.MSBuild" Version="4.6.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="SkiaSharp" Version="2.88.0-preview.266" />
+		<PackageReference Include="SkiaSharp.NativeAssets.WebAssembly" Version="2.88.0-preview.266" />
+		<PackageReference Include="System.Reactive" Version="5.0.0" />
+	</ItemGroup>
 
 
-  <ItemGroup>
-    <SupportedPlatform Include="browser" />
-  </ItemGroup>
+	<ItemGroup>
+		<SupportedPlatform Include="browser" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\CSX\CSX.csproj" />
-  </ItemGroup>
+	<!--Include Skia native lib-->
+	<PropertyGroup>
+		<WasmBuildNative Condition="'$(WasmBuildNative)' == ''">true</WasmBuildNative>
+	</PropertyGroup>
+	<!--Include Skia native lib end-->
+	<ItemGroup>
+		<NativeFileReference Include="libSkiaSharp.a" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\CSX\CSX.csproj" />
+	</ItemGroup>
 
 </Project>

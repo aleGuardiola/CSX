@@ -6,7 +6,7 @@ namespace CSX.Components
     {
         ulong DOMElement { get; }
         public void Initialize(IDOM dom);
-        public void Destroy(IDOM dom);
+        public void Dispose(IDOM dom);
         public IReadOnlyCollection<IComponent> Children { get; }
         public Props Props { get; }
         public void SetProps(object props);

@@ -1,6 +1,7 @@
 ﻿using CSX.Components;
 using CSX.Events;
 using CSX.Rendering;
+using System.Drawing;
 using System.Reactive.Linq;
 using System.Text.Json;
 
@@ -14,30 +15,53 @@ namespace CSX.NativeComponents
     }
     public record ViewStyleProps : LayoutStyleProps
     {
-        public string? BackgroundColor { get; init; }
-        public string? BorderBottomColor { get; init; }
-        public double? BorderBottomEndRadius { get; init; }
-        public double? BorderBottomLeftRadius { get; init; }
-        public double? BorderBottomRightRadius { get; init; }
-        public double? BorderBottomStartRadius { get; init; }
-        public double? BorderBottomWidth { get; init; }
-        public string? BorderColor { get; init; }
-        public string? BorderEndColor { get; init; }
-        public string? BorderLeftColor { get; init; }
-        public double? BorderLeftWidth { get; init; }
-        public double? BorderRadius { get; init; }
-        public string? BorderRightColor { get; init; }
-        public double? BorderRightWidth { get; init; }
-        public string? BorderStartColor { get; init; }
+        public Color? BackgroundColor { get; init; }
+
+        public Color? BorderBottomColor { get; init; }
+
+        public float? BorderBottomEndRadius { get; init; }
+
+        public float? BorderBottomLeftRadius { get; init; }
+
+        public float? BorderBottomRightRadius { get; init; }
+
+        public float? BorderBottomStartRadius { get; init; }
+
+        public float? BorderBottomWidth { get; init; }
+
+        public Color? BorderColor { get; init; }
+
+        public Color? BorderEndColor { get; init; }
+
+        public Color? BorderLeftColor { get; init; }
+
+        public float? BorderLeftWidth { get; init; }
+
+        public float? BorderRadius { get; init; }
+
+        public Color? BorderRightColor { get; init; }
+
+        public float? BorderRightWidth { get; init; }
+
+        public Color? BorderStartColor { get; init; }
+
         public BorderStyle? BorderStyle { get; init; }
-        public string? BorderTopColor { get; init; }
-        public double? BorderTopEndRadius { get; init; }
-        public double? BorderTopLeftRadius { get; init; }
-        public double? BorderTopRightRadius { get; init; }
-        public double? BorderTopStartRadius { get; init; }
-        public double? BorderTopWidth { get; init; }
-        public double? BorderWidth { get; init; }
-        public double? Opacity { get; init; }
+
+        public Color? BorderTopColor { get; init; }
+
+        public float? BorderTopEndRadius { get; init; }
+
+        public float? BorderTopLeftRadius { get; init; }
+
+        public float? BorderTopRightRadius { get; init; }
+
+        public float? BorderTopStartRadius { get; init; }
+
+        public float? BorderTopWidth { get; init; }
+
+        public float? BorderWidth { get; init; }
+
+        public float? Opacity { get; init; }
     }
     public record ViewProps<TStyle> : Props where TStyle : ViewStyleProps
     {
@@ -46,120 +70,106 @@ namespace CSX.NativeComponents
         public Action<CursorEventArgs>? OnMouseOut { get; init; }
         public TStyle? Style { get; init; } = Activator.CreateInstance<TStyle>();
     }
-    public record ViewProps : ViewProps<ViewStyleProps>;    
-    public class View : DOMComponent<ViewProps>
+    public record ViewProps : ViewProps<ViewStyleProps>;
+    public class View : View<ViewProps, ViewStyleProps> { }
+    public class View<TProps, TStyles> : DOMComponent<TProps> where TProps : ViewProps<TStyles> where TStyles : ViewStyleProps
     {
-        IDisposable? _eventsSubscription;
+        protected virtual NativeElement Element => NativeElement.View;
 
-        const string name = "View";
         protected override ulong OnInitialize(IDOM dom)
         {
-            var elementId = dom.CreateElement(name);
+            var elementId = dom.CreateElement(Element);
 
-            _eventsSubscription = dom.Events.Where(x => x.ElementId == elementId).Subscribe(ev =>
-            {
-                switch(ev.EventName)
-                {
-                    case "click":
-                        Props.OnPress?.Invoke(ev.Payload.Deserialize<CursorEventArgs>() ?? throw new InvalidOperationException("Failed to get event apyload"));
-                        break;
-                    case "mouseover":
-                        Props.OnMouseOver?.Invoke(ev.Payload.Deserialize<CursorEventArgs>() ?? throw new InvalidOperationException("Failed to get event apyload"));
-                        break;
-                    case "mouseout":
-                        Props.OnMouseOut?.Invoke(ev.Payload.Deserialize<CursorEventArgs>() ?? throw new InvalidOperationException("Failed to get event apyload"));
-                        break;
-                }
-            });
-
+            dom.Events.RedirectToCallback(this, NativeEvent.Click, (p) => p.OnPress);
+            dom.Events.RedirectToCallback(this, NativeEvent.MouseOver, (p) => p.OnMouseOver);
+            dom.Events.RedirectToCallback(this, NativeEvent.MouseOut, (p) => p.OnMouseOut);
+            
             return elementId;
         }
 
         protected override void Render(IDOM dom)
         {            
-            dom.SetAttributesIfDifferent(DOMElement, GetPropertiesWithValues().Select(x => new KeyValuePair<string, string?>(x.Name, x.Value)));
-
+            dom.SetAttributesIfDifferent(DOMElement, GetPropertiesWithValues().Select(x => new KeyValuePair<NativeAttribute, object?>(x.Name, x.Value)));
             RenderChildren(dom);
         }
 
-        IEnumerable<(string Name, string? Value)> GetPropertiesWithValues()
+        IEnumerable<(NativeAttribute Name, object? Value)> GetPropertiesWithValues()
         {
             // styles
-            yield return ($"Style.{nameof(ViewStyleProps.BackgroundColor)}", Props.Style?.BackgroundColor?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderBottomColor)}", Props.Style?.BorderBottomColor?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderBottomEndRadius)}", Props.Style?.BorderBottomEndRadius?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderBottomLeftRadius)}", Props.Style?.BorderBottomLeftRadius?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderBottomRightRadius)}", Props.Style?.BorderBottomRightRadius?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderBottomStartRadius)}", Props.Style?.BorderBottomStartRadius?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderBottomWidth)}", Props.Style?.BorderBottomWidth?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderColor)}", Props.Style?.BorderColor?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderEndColor)}", Props.Style?.BorderEndColor?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderLeftColor)}", Props.Style?.BorderLeftColor?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderLeftWidth)}", Props.Style?.BorderLeftWidth?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderRadius)}", Props.Style?.BorderRadius?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderRightColor)}", Props.Style?.BorderRightColor?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderRightWidth)}", Props.Style?.BorderRightWidth?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderStartColor)}", Props.Style?.BorderStartColor?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderStyle)}", Props.Style?.BorderStyle?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderTopColor)}", Props.Style?.BorderTopColor?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderTopEndRadius)}", Props.Style?.BorderTopEndRadius?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderTopLeftRadius)}", Props.Style?.BorderTopLeftRadius?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderTopRightRadius)}", Props.Style?.BorderTopRightRadius?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderTopStartRadius)}", Props.Style?.BorderTopStartRadius?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderTopWidth)}", Props.Style?.BorderTopWidth?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.BorderWidth)}", Props.Style?.BorderWidth?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Opacity)}", Props.Style?.Opacity?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.AlignContent)}", Props.Style?.AlignContent?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.AlignItems)}", Props.Style?.AlignItems?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.AlignSelf)}", Props.Style?.AlignSelf?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.AspectRatio)}", Props.Style?.AspectRatio?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Bottom)}", Props.Style?.Bottom?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Direction)}", Props.Style?.Direction?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Display)}", Props.Style?.Display?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.End)}", Props.Style?.End?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Flex)}", Props.Style?.Flex?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.FlexBasis)}", Props.Style?.FlexBasis?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.FlexDirection)}", Props.Style?.FlexDirection?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.FlexGrow)}", Props.Style?.FlexGrow?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.FlexShrink)}", Props.Style?.FlexShrink?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.FlexWrap)}", Props.Style?.FlexWrap?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Height)}", Props.Style?.Height?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.JustifyContent)}", Props.Style?.JustifyContent?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Left)}", Props.Style?.Left?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Margin)}", Props.Style?.Margin?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MarginBottom)}", Props.Style?.MarginBottom?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MarginEnd)}", Props.Style?.MarginEnd?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MarginHorizontal)}", Props.Style?.MarginHorizontal?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MarginLeft)}", Props.Style?.MarginLeft?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MarginRight)}", Props.Style?.MarginRight?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MarginStart)}", Props.Style?.MarginStart?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MarginTop)}", Props.Style?.MarginTop?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MarginVertical)}", Props.Style?.MarginVertical?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MaxHeight)}", Props.Style?.MaxHeight?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MaxWidth)}", Props.Style?.MaxWidth?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MinHeight)}", Props.Style?.MinHeight?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.MinWidth)}", Props.Style?.MinWidth?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Overflow)}", Props.Style?.Overflow?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Padding)}", Props.Style?.Padding?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.PaddingBottom)}", Props.Style?.PaddingBottom?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.PaddingEnd)}", Props.Style?.PaddingEnd?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.PaddingHorizontal)}", Props.Style?.PaddingHorizontal?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.PaddingLeft)}", Props.Style?.PaddingLeft?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.PaddingRight)}", Props.Style?.PaddingRight?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.PaddingStart)}", Props.Style?.PaddingStart?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.PaddingTop)}", Props.Style?.PaddingTop?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.PaddingVertical)}", Props.Style?.PaddingVertical?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Position)}", Props.Style?.Position?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Right)}", Props.Style?.Right?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Start)}", Props.Style?.Start?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Top)}", Props.Style?.Top?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.Width)}", Props.Style?.Width?.ToString());
-            yield return ($"Style.{nameof(ViewStyleProps.ZIndex)}", Props.Style?.ZIndex?.ToString());
+            yield return (NativeAttribute.BackgroundColor,   Props.Style?.BackgroundColor);
+            yield return (NativeAttribute.BorderBottomColor,   Props.Style?.BorderBottomColor);
+            yield return (NativeAttribute.BorderBottomEndRadius,   Props.Style?.BorderBottomEndRadius);
+            yield return (NativeAttribute.BorderBottomLeftRadius,   Props.Style?.BorderBottomLeftRadius);
+            yield return (NativeAttribute.BorderBottomRightRadius,   Props.Style?.BorderBottomRightRadius);
+            yield return (NativeAttribute.BorderBottomStartRadius,   Props.Style?.BorderBottomStartRadius);
+            yield return (NativeAttribute.BorderBottomWidth,   Props.Style?.BorderBottomWidth);
+            yield return (NativeAttribute.BorderColor,   Props.Style?.BorderColor);
+            yield return (NativeAttribute.BorderEndColor,   Props.Style?.BorderEndColor);
+            yield return (NativeAttribute.BorderLeftColor,   Props.Style?.BorderLeftColor);
+            yield return (NativeAttribute.BorderLeftWidth,   Props.Style?.BorderLeftWidth);
+            yield return (NativeAttribute.BorderRadius,   Props.Style?.BorderRadius);
+            yield return (NativeAttribute.BorderRightColor,   Props.Style?.BorderRightColor);
+            yield return (NativeAttribute.BorderRightWidth,   Props.Style?.BorderRightWidth);
+            yield return (NativeAttribute.BorderStartColor,   Props.Style?.BorderStartColor);
+            yield return (NativeAttribute.BorderStyle,   Props.Style?.BorderStyle);
+            yield return (NativeAttribute.BorderTopColor,   Props.Style?.BorderTopColor);
+            yield return (NativeAttribute.BorderTopEndRadius,   Props.Style?.BorderTopEndRadius);
+            yield return (NativeAttribute.BorderTopLeftRadius,   Props.Style?.BorderTopLeftRadius);
+            yield return (NativeAttribute.BorderTopRightRadius,   Props.Style?.BorderTopRightRadius);
+            yield return (NativeAttribute.BorderTopStartRadius,   Props.Style?.BorderTopStartRadius);
+            yield return (NativeAttribute.BorderTopWidth,   Props.Style?.BorderTopWidth);
+            yield return (NativeAttribute.BorderWidth,   Props.Style?.BorderWidth);
+            yield return (NativeAttribute.Opacity,   Props.Style?.Opacity);
+            yield return (NativeAttribute.AlignContent,   Props.Style?.AlignContent);
+            yield return (NativeAttribute.AlignItems,   Props.Style?.AlignItems);
+            yield return (NativeAttribute.AlignSelf,   Props.Style?.AlignSelf);
+            yield return (NativeAttribute.AspectRatio,   Props.Style?.AspectRatio);
+            yield return (NativeAttribute.Bottom,   Props.Style?.Bottom);
+            yield return (NativeAttribute.Direction,   Props.Style?.Direction);
+            yield return (NativeAttribute.Display,   Props.Style?.Display);
+            yield return (NativeAttribute.End,   Props.Style?.End);
+            yield return (NativeAttribute.Flex,   Props.Style?.Flex);
+            yield return (NativeAttribute.FlexBasis,   Props.Style?.FlexBasis);
+            yield return (NativeAttribute.FlexDirection,   Props.Style?.FlexDirection);
+            yield return (NativeAttribute.FlexGrow,   Props.Style?.FlexGrow);
+            yield return (NativeAttribute.FlexShrink,   Props.Style?.FlexShrink);
+            yield return (NativeAttribute.FlexWrap,   Props.Style?.FlexWrap);
+            yield return (NativeAttribute.Height,   Props.Style?.Height);
+            yield return (NativeAttribute.JustifyContent,   Props.Style?.JustifyContent);
+            yield return (NativeAttribute.Left,   Props.Style?.Left);
+            yield return (NativeAttribute.Margin,   Props.Style?.Margin);
+            yield return (NativeAttribute.MarginBottom,   Props.Style?.MarginBottom);
+            yield return (NativeAttribute.MarginEnd,   Props.Style?.MarginEnd);
+            yield return (NativeAttribute.MarginHorizontal,   Props.Style?.MarginHorizontal);
+            yield return (NativeAttribute.MarginLeft,   Props.Style?.MarginLeft);
+            yield return (NativeAttribute.MarginRight,   Props.Style?.MarginRight);
+            yield return (NativeAttribute.MarginStart,   Props.Style?.MarginStart);
+            yield return (NativeAttribute.MarginTop,   Props.Style?.MarginTop);
+            yield return (NativeAttribute.MarginVertical,   Props.Style?.MarginVertical);
+            yield return (NativeAttribute.MaxHeight,   Props.Style?.MaxHeight);
+            yield return (NativeAttribute.MaxWidth,   Props.Style?.MaxWidth);
+            yield return (NativeAttribute.MinHeight,   Props.Style?.MinHeight);
+            yield return (NativeAttribute.MinWidth,   Props.Style?.MinWidth);
+            yield return (NativeAttribute.Overflow,   Props.Style?.Overflow);
+            yield return (NativeAttribute.Padding,   Props.Style?.Padding);
+            yield return (NativeAttribute.PaddingBottom,   Props.Style?.PaddingBottom);
+            yield return (NativeAttribute.PaddingEnd,   Props.Style?.PaddingEnd);
+            yield return (NativeAttribute.PaddingHorizontal,   Props.Style?.PaddingHorizontal);
+            yield return (NativeAttribute.PaddingLeft,   Props.Style?.PaddingLeft);
+            yield return (NativeAttribute.PaddingRight,   Props.Style?.PaddingRight);
+            yield return (NativeAttribute.PaddingStart,   Props.Style?.PaddingStart);
+            yield return (NativeAttribute.PaddingTop,   Props.Style?.PaddingTop);
+            yield return (NativeAttribute.PaddingVertical,   Props.Style?.PaddingVertical);
+            yield return (NativeAttribute.Position,   Props.Style?.Position);
+            yield return (NativeAttribute.Right,   Props.Style?.Right);
+            yield return (NativeAttribute.Start,   Props.Style?.Start);
+            yield return (NativeAttribute.Top,   Props.Style?.Top);
+            yield return (NativeAttribute.Width,   Props.Style?.Width);
+            yield return (NativeAttribute.ZIndex,   Props.Style?.ZIndex);
         }
 
         protected override void OnDestroy(IDOM dom)
-        {
-            _eventsSubscription?.Dispose();
+        {            
             dom.Remove(DOMElement);
             dom.DestroyElement(DOMElement);
         }

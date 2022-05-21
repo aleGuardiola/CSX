@@ -10,16 +10,22 @@ namespace CSX.Rendering
     {
         IObservable<Event> Events { get; }
         ulong GetRootElement();
-        ulong CreateElement(string name);
+        ulong CreateElement(NativeElement element);
         void Remove(ulong id);
         void SetChildren(ulong id, ulong[] children);
-        void SetAttribute(ulong id, string name, string? value);
-        void SetAttributes(ulong id, KeyValuePair<string, string?>[] attributes);
+        void SetAttribute(ulong id, NativeAttribute name, object? value);
+        void SetAttributes(ulong id, KeyValuePair<NativeAttribute, object?>[] attributes);
         void SetElementText(ulong id, string text);
-        string? GetAttribute(ulong id, string name);
+        string GetElementText(ulong id);
+        object? GetAttribute(ulong id, NativeAttribute name);
         void AppendChild(ulong parent, ulong child); 
         bool HasChild(ulong parent, ulong child);
-        void DestroyElement(ulong id);
+        ulong[] GetChildren(ulong parent);
+        void DestroyElement(ulong id);        
+        
+        bool SupportAppendingDom();
+        void AppendDom(IDOM dom);
+        IDOM CreateNewMemoryDom();        
     }   
 
 }

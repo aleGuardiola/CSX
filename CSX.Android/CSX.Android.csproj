@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net6.0-android</TargetFramework>
+		<SupportedOSPlatformVersion>21</SupportedOSPlatformVersion>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+	<ItemGroup>
+	  <AndroidLibrary Remove="lib\**" />
+	  <AndroidNativeLibrary Remove="lib\**" />
+	  <Compile Remove="lib\**" />
+	  <EmbeddedResource Remove="lib\**" />
+	  <JavaSourceJar Remove="lib\**" />
+	  <None Remove="lib\**" />
+	  <TransformFile Remove="lib\**" />
+	</ItemGroup>	
+	<ItemGroup>
+		<ProjectReference Include="..\CSX.Native\CSX.Native.csproj" />
+		<ProjectReference Include="..\CSX\CSX.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <AndroidNativeLibrary Remove="C:\Users\thesk\.nuget\packages\xamarin.flex\0.4.1\build\MonoAndroid\\..\..\native\android\armeabi\libflex.so" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Include="C:\Users\thesk\.nuget\packages\xamarin.flex\0.4.1\build\MonoAndroid\\..\..\native\android\armeabi\libflex.so" />
+	</ItemGroup>	
+</Project>

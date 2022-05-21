@@ -1,24 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using CSX.Events;
 
 namespace CSX.Rendering
 {
     public class Event
     {
-        public Event(ulong elementId, string eventName, JsonElement payload)
+        public Event(ulong elementId, NativeEvent eventType, CSXEventArgs payload)
         {
             ElementId = elementId;
-            EventName = eventName;
+            EventType = eventType;
             Payload = payload;
         }
 
         public ulong ElementId { get; }
-        public string EventName { get; }
-        public JsonElement Payload { get; }
-
+        public NativeEvent EventType { get; }
+        public CSXEventArgs Payload { get; }
     }
 }

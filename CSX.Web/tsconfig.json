@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "removeComments": true,
+    "sourceMap": false,
+    "pretty": false,
+    "target": "ES6",
+    "outFile": "wwwroot/csx.js"      
+  },
+  "include": [
+    "scripts/types/**/*"
+  ],
+  "files": [
+
+    "scripts/elements.ts",
+    "scripts/getModule.ts",
+    "scripts/attachElement.ts",
+    "scripts/createElement.ts",
+    "scripts/destroyElement.ts",
+    "scripts/elementAttributes.ts",
+    "scripts/removeElement.ts",
+    "scripts/setChildren.ts",
+    "scripts/setElementText.ts",
+
+
+    "scripts/skia/DpiWatcher.ts",
+    "scripts/skia/SizeWatcher.ts",
+    "scripts/skia/SKHtmlCanvas.ts"
+
+  ]
+ 
+}

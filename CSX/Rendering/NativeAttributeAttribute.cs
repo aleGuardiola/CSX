@@ -8,7 +8,7 @@ namespace CSX.Rendering
 {
     public class NativeAttributeAttribute : Attribute
     {
-        NativeAttribute Attribute { get; }
+        public NativeAttribute Attribute { get; }
 
         public NativeAttributeAttribute(NativeAttribute attribute)
         {

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Facebook.Yoga" Version="1.2.0-pre1" />
+    <PackageReference Include="Facebook.Yoga.Native" Version="1.0.2-pre" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CSX.Native\CSX.Native.csproj" />
+    <ProjectReference Include="..\CSX\CSX.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CSX.Events
 {
-    public class TextChangeEventArgs : EventArgs
+    public class TextChangeEventArgs : CSXEventArgs
     {
         public TextChangeEventArgs(string text)
         {
