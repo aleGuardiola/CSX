@@ -1,6 +1,4 @@
-﻿using CSX.NativeComponents;
-using CSX.Rendering;
-using SkiaSharp;
+﻿using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -8,51 +6,27 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSX.Skia.Views
+namespace CSX.Skia
 {
-    public class ScrollView : View
+    public class DefaultScrollBarRenderer : ScrollBarRenderer
     {
-        public float ScrollBarWidth = 17f;
         public float ScrollBarMinimumHeight = 20f;
         public Color ScrollBarBackgroundColor = ColorTranslator.FromHtml("#424242");
         public Color ScrollBarColor = ColorTranslator.FromHtml("#686868");
         public Color ScrollBarButtonColor = Color.White;
         public Color ScrollBarButtonDisabledColor = ColorTranslator.FromHtml("#808080");
 
-        public ScrollView(ulong id) : base(id)
-        {
-            SetAttribute(NativeAttribute.Overflow, Overflow.Scroll);
-        }
+        public override void Render(SKCanvas canvas, float x, float y, float height, float totalContentLenght, float scrollPosition)
+        {            
+            var maxScroll = totalContentLenght - height;
 
-        public override bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context)
-        {
-            if (base.Draw(canvas, forceDraw, level, clipRect, translateY, context))
-            {
-                RenderScrollBar(canvas);
-                return true;
-            }            
-
-            return false;
-        }
-
-        public void RenderScrollBar(SKCanvas canvas)
-        {
-            var totalContentLenght = GetContentHeight();
-            var maxScroll = totalContentLenght - (YogaNode.LayoutHeight - YogaNode.LayoutPaddingTop - YogaNode.LayoutPaddingBottom - GetBorderTopWidth() - GetBorderBottomWidth());
-            
             // Dont render the scroll bar if it is not need it
-            if(maxScroll < 0)
+            if (maxScroll < 0)
             {
                 return;
             }
 
-            var scrollBarPostion = GetScrollPosition() / maxScroll;
-
-            var height = YogaNode.LayoutHeight;
-            var width = YogaNode.LayoutWidth;
-
-            var x = YogaNode.LayoutX + width - ScrollBarWidth;
-            var y = YogaNode.LayoutY;
+            var scrollBarPostion = scrollPosition / maxScroll;                       
 
             // render background
             using (var paint = new SKPaint())
@@ -73,10 +47,10 @@ namespace CSX.Skia.Views
             var sY = y + buttonH + 6f;
             var stY = y + height - buttonH - 6f;
 
-            var scrollBarHeight = Math.Max((YogaNode.LayoutHeight / totalContentLenght) * (stY - sY), ScrollBarMinimumHeight);
+            var scrollBarHeight = Math.Max((height / totalContentLenght) * (stY - sY), ScrollBarMinimumHeight);
 
             var scrollBarWidth = ScrollBarWidth - 2f;
-                        
+
             var scrollBarStart = sY + (scrollBarHeight / 2f);
             var scrollBarStop = stY - (scrollBarHeight / 2f);
 
@@ -93,8 +67,9 @@ namespace CSX.Skia.Views
 
         }
 
+
         public void DrawUpButton(float x, float y, float h, Color color, SKCanvas canvas)
-        {            
+        {
             SKPath path = new SKPath();
             path.MoveTo((h / 2) + x, y);
 
@@ -132,6 +107,7 @@ namespace CSX.Skia.Views
             path.Dispose();
             paint.Dispose();
         }
+
 
     }
 }

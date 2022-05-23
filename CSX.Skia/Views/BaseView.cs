@@ -13,7 +13,7 @@ namespace CSX.Skia.Views
     public abstract class BaseView
     {
         public readonly ulong Id;
-        public bool ShouldCalculateLayout { get; private set; }
+        public bool IsDirty { get; protected set; } = true;
         public YogaNode YogaNode { get; private set; } = new YogaNode();
 
         public Dictionary<NativeAttribute, object> Attributes { get; } = new Dictionary<NativeAttribute, object>();
@@ -21,6 +21,11 @@ namespace CSX.Skia.Views
         public BaseView(ulong id)
         {
             Id = id;
+        }
+
+        public void MarkAsSeen()
+        {
+            IsDirty = false;
         }
 
         public virtual void SetAttribute(NativeAttribute attribute, object? value)
@@ -294,8 +299,7 @@ namespace CSX.Skia.Views
                     break;
             }
 
-            ShouldCalculateLayout = true;
-
+            IsDirty = true;
         }
 
 
@@ -304,9 +308,14 @@ namespace CSX.Skia.Views
             // Used for things like text
         }
 
+        public virtual bool NeedsToReDraw()
+        {
+            return IsDirty || YogaNode.HasNewLayout;
+        }
+
         public abstract void CalculateLayout();
         
 
-        public abstract void Draw(SKCanvas canvas);
+        public abstract bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context);
     }
 }

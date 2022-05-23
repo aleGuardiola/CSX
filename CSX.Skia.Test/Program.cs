@@ -4,6 +4,7 @@
 // constract the information describing the desired surface
 using CSX.NativeComponents;
 using CSX.Rendering;
+using CSX.Skia;
 using CSX.Skia.Views;
 using SkiaSharp;
 using System.Drawing;
@@ -31,7 +32,7 @@ root.AppendView(GetScrollView());
 root.AppendView(GetScrollView());
 
 root.CalculateLayout();
-root.Draw(canvas);
+root.Draw(canvas, true, new DrawContext());
 
 // create a raster instance of the surface
 var image = surface.Snapshot();

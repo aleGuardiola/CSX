@@ -89,18 +89,50 @@ namespace CSX.Skia.Views
         }
 
         public string TextContent { get; set; } = "";
+        string lastDrawText = "";
 
-        public override void Draw(SKCanvas canvas)
+        public override bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context)
         {
-            base.Draw(canvas);            
+            var x = YogaNode.LayoutX + context.RelativeToX;
+            var y = YogaNode.LayoutY + context.RelativeToY;
+
+            if(!forceDraw && !IsDirty && !YogaNode.HasNewLayout && lastDrawText == TextContent)
+            {
+                return false;
+            }
+
+            base.Draw(canvas, true, level, clipRect, translateY, context);
+
+            canvas.Translate(0f, translateY * -1);
+            if (clipRect != null)
+            {
+                canvas.Save();
+                canvas.ClipRect(clipRect.Value);
+            }
 
             using (var paint = GetPaint())
             {
                 var borderLeftWidth = float.IsNaN(YogaNode.BorderLeftWidth) ? 0 : YogaNode.BorderLeftWidth;
                 var borderToptWidth = float.IsNaN(YogaNode.BorderTopWidth) ? 0 : YogaNode.BorderTopWidth;
-                canvas.DrawText(TextContent, YogaNode.LayoutX + YogaNode.LayoutPaddingLeft + borderLeftWidth, YogaNode.LayoutY + YogaNode.LayoutPaddingTop + borderToptWidth + YogaNode.LayoutHeight, paint);
+                canvas.DrawText(TextContent, x + YogaNode.LayoutPaddingLeft + borderLeftWidth, y + YogaNode.LayoutPaddingTop + borderToptWidth + YogaNode.LayoutHeight, paint);
             }
 
+            lastDrawText = TextContent;
+
+
+            canvas.Translate(0f, translateY);
+
+            if (clipRect != null)
+            {
+                canvas.Restore();
+            }
+
+            return true;
+        }
+
+        public override bool NeedsToReDraw()
+        {
+            return base.NeedsToReDraw() || lastDrawText != TextContent;
         }
 
         public override void Mesure()
@@ -109,8 +141,16 @@ namespace CSX.Skia.Views
             {
                 SKRect textBounds = new SKRect();
                 _ = paint.MeasureText(TextContent, ref textBounds);
-                YogaNode.Width = textBounds.Width;
-                YogaNode.Height = textBounds.Height;
+
+                if(float.IsNaN(YogaNode.Width.Value))
+                {
+                    YogaNode.Width = textBounds.Width;
+                }
+
+                if (float.IsNaN(YogaNode.Height.Value))
+                {
+                    YogaNode.Height = textBounds.Height;
+                }                
             }                
 
         }

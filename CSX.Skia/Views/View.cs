@@ -23,29 +23,32 @@ namespace CSX.Skia.Views
         {
             _children.Add(view);
             YogaNode.Insert(YogaNode.Count, view.YogaNode);
+            IsDirty = true;
         }
 
         public void RemoveAt(int index)
         {
             YogaNode.RemoveAt(index);
             _children.RemoveAt(index);
+            IsDirty = true;
         }
 
         public void Clear()
         {
             YogaNode.Clear();
             _children.Clear();
+            IsDirty = true;
         }
 
         public SKColor GetBackgroundColor()
         {
-            if(Attributes.TryGetValue(NativeAttribute.BackgroundColor, out object? value))
+            if (Attributes.TryGetValue(NativeAttribute.BackgroundColor, out object? value))
             {
                 var color = (System.Drawing.Color)value;
                 return new SKColor(color.R, color.G, color.B, color.A);
             }
 
-            return new SKColor(255,255,255,0);
+            return SKColors.Transparent;
         }
 
         public SKColor GetBorderColor()
@@ -105,12 +108,12 @@ namespace CSX.Skia.Views
 
         public float GetBorderTopWidth()
         {
-            if(!float.IsNaN(YogaNode.BorderTopWidth))
+            if (!float.IsNaN(YogaNode.BorderTopWidth))
             {
                 return YogaNode.BorderTopWidth;
             }
 
-            if(!float.IsNaN(YogaNode.BorderWidth))
+            if (!float.IsNaN(YogaNode.BorderWidth))
             {
                 return YogaNode.BorderWidth;
             }
@@ -165,7 +168,7 @@ namespace CSX.Skia.Views
 
         public Overflow GetOverFlow()
         {
-            if(Attributes.TryGetValue(NativeAttribute.Overflow, out var value))
+            if (Attributes.TryGetValue(NativeAttribute.Overflow, out var value))
             {
                 return (Overflow)value;
             }
@@ -174,6 +177,11 @@ namespace CSX.Skia.Views
         }
         public float GetScrollPosition()
         {
+            if(GetOverFlow() != Overflow.Scroll)
+            {
+                return 0f;
+            }
+
             if (Attributes.TryGetValue(NativeAttribute.ScrollPosition, out var value))
             {
                 return (float)value;
@@ -187,139 +195,305 @@ namespace CSX.Skia.Views
             return YogaNode.Sum(x => x.LayoutHeight);
         }
 
-        public override void Draw(SKCanvas canvas)
+        SKPaint _backgroundPaint = new SKPaint()
         {
-            var totalWidth = YogaNode.LayoutWidth;
-            var totalHeight = YogaNode.LayoutHeight;
+            Style = SKPaintStyle.Fill
+        };
 
-            var x = YogaNode.LayoutX;
-            var y = YogaNode.LayoutY;                       
+        SKPaint _borderTopPaint = new SKPaint()
+        {
+            Style = SKPaintStyle.Fill
+        };
 
+        SKPaint _borderBottomPaint = new SKPaint()
+        {
+            Style = SKPaintStyle.Fill
+        };
+
+        SKPaint _borderRightPaint = new SKPaint()
+        {
+            Style = SKPaintStyle.Fill
+        };
+
+        SKPaint _borderLeftPaint = new SKPaint()
+        {
+            Style = SKPaintStyle.Fill
+        };
+
+        float lastScrollPosition = 0f;
+        float lastBorderTop = 0f;
+        float lastBorderBottom = 0f;
+        float lastBorderLeft = 0f;
+        float lastBorderRight = 0f;
+
+        int backgroundLayerSave = -1;
+
+        //SKSurface? _contentSurface;
+        //SKImageInfo _contentInfo;
+
+        public override bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context)
+        {
+            canvas.Translate(0f, translateY * -1);
+            if (clipRect != null)
             {
-                var paint = new SKPaint()
-                {
-                    Color = GetBackgroundColor(),
-                    Style = SKPaintStyle.Fill
-                };
-
-                canvas.DrawRect(new SKRect(
-                    x,
-                    y,
-                    x + totalWidth,
-                    y + totalHeight
-                    ), paint);
+                canvas.Save();
+                canvas.ClipRect(clipRect.Value);
             }
+
+            var childrenLevel = level + 1;
+
+            SKCanvas childrenCanvas = null;
+            if (_children.Count > 0)
+            {
+                childrenCanvas = context.GetCanvas(childrenLevel);
+            }            
+
+            bool result = false;
+
+            var totalWidth = YogaNode.LayoutWidth;
+            var totalHeight = YogaNode.LayoutHeight;                       
+
+            var x = YogaNode.LayoutX + context.RelativeToX;
+            var y = YogaNode.LayoutY + context.RelativeToY;
+
+            var newContext = context with { RelativeToX = x, RelativeToY = y };
 
             var borderTop = GetBorderTopWidth();
             var borderBottom = GetBorderBottomWidth();
             var borderLeft = GetBorderLeftWidth();
             var borderRight = GetBorderRightWidth();
 
-            var overflow = GetOverFlow();
-            if(overflow == Overflow.Hidden || overflow == Overflow.Scroll)
-            {
-                var info = new SKImageInfo((int)totalWidth, (int)(totalHeight - YogaNode.LayoutPaddingBottom - borderBottom));
-                using (var surface = SKSurface.Create(info))
-                {
-                    if(overflow == Overflow.Scroll)
-                    {                        
-                        surface.Canvas.Translate(0f, GetScrollPosition() * -1);
-                    }
+            var contentWidth = totalWidth - (YogaNode.LayoutPaddingRight + borderRight);
+            var contentHeight = totalHeight - (YogaNode.LayoutPaddingBottom + borderBottom);
 
+            var scrollPosition = GetScrollPosition();
+
+
+
+            var contentRect = new SKRect(
+                x + borderLeft,
+                y + borderTop,
+                x + (totalWidth - borderRight),
+                y + (totalHeight - borderBottom));
+
+            // only draw background when the layout changed
+            if(forceDraw || IsDirty || YogaNode.HasNewLayout)
+            {
+                _backgroundPaint.Color = GetBackgroundColor();
+                canvas.DrawRect(contentRect, _backgroundPaint);
+            }            
+
+            var overflow = GetOverFlow();
+            if (overflow == Overflow.Hidden || overflow == Overflow.Scroll)
+            {
+                //if (_contentSurface == null)
+                //{
+                //    _contentInfo = new SKImageInfo((int)contentWidth, (int)contentHeight);
+                //    _contentSurface = SKSurface.Create(_contentInfo);
+                //}
+                //else
+                //{
+                //    if (_contentInfo.Width != (int)contentWidth || _contentInfo.Height != (int)contentHeight)
+                //    {
+                //        _contentInfo = new SKImageInfo((int)contentWidth, (int)contentHeight);
+                //        _contentSurface = SKSurface.Create(_contentInfo);
+                //    }
+                //}                
+
+                bool scrollPositionChanged = true;
+                if (lastScrollPosition != scrollPosition)
+                {
+                    scrollPositionChanged = true;
+                    lastScrollPosition = scrollPosition;
+                }
+
+                //if (overflow == Overflow.Scroll)
+                //{                    
+
+
+                //    //if (scrollPosition * -1 != _contentSurface.Canvas.TotalMatrix.TransY)
+                //    //{
+                //    //    var translation = GetScrollPosition() + _contentSurface.Canvas.TotalMatrix.TransY;
+                //    //    _contentSurface.Canvas.Translate(0f, translation * -1);
+                //    //    scrollPositionChanged = true;
+                //    //}
+                //}
+
+                // if scroll position changed or the layout changed always draw children
+                if (scrollPositionChanged || YogaNode.HasNewLayout)
+                {       
+                    if(childrenCanvas != null)
+                    {
+                        childrenCanvas.DrawRect(contentRect, new SKPaint() { Color = SKColors.White });
+
+                        result = true;
+                        foreach (var child in Children)
+                        {
+                            child.Draw(childrenCanvas, true, childrenLevel, contentRect, scrollPosition, newContext);
+                            child.MarkAsSeen();
+                        }
+                    }
+                }
+                else
+                {
+                    var childrenToDraw = Children.Where(x => x.NeedsToReDraw()).ToArray();
+                                        
                     // draw children
                     foreach (var child in Children)
                     {
-                        child.Draw(surface.Canvas);
+                        if(child.Draw(childrenCanvas, false, childrenLevel, contentRect, scrollPosition, newContext))
+                        {
+                            result = true;
+                        }
+                        child.MarkAsSeen();
                     }
-                    canvas.DrawSurface(surface, x, y);
-                }                
-            }
-                        
+                }
 
-            
-            // draw border
-            if (borderTop > 0)
+                
+
+                //if (scrollPositionChanged || YogaNode.HasNewLayout)
+                //{
+                //    _backgroundPaint.Color = GetBackgroundColor();
+
+                //    canvas.DrawRect(new SKRect(
+                //        x + borderLeft,
+                //        y + borderTop,
+                //        x + (totalWidth - borderRight),
+                //        y + (totalHeight - borderBottom)
+                //        ), _backgroundPaint);
+
+                //    result = true;
+
+                //    // canvas.Clear(GetBackgroundColor());
+
+                //    // draw children
+                //    foreach (var child in Children)
+                //    {
+                //        child.Draw(childrenCanvas, true, childrenLevel, newContext);
+                //        child.MarkAsSeen();
+                //    }
+                //}
+                //else
+                //{
+                //    if (childrenToDraw.Length > 0)
+                //    {
+                //        _backgroundPaint.Color = GetBackgroundColor();
+
+                //        canvas.DrawRect(new SKRect(
+                //            x + borderLeft,
+                //            y + borderTop,
+                //            x + (totalWidth - borderRight),
+                //            y + (totalHeight - borderBottom)
+                //            ), _backgroundPaint);                        
+                //    }
+
+                //    // If the layout has not changed and the scroll position is the same lets try and reduce the number of draws,
+                //    // also clearing the content is not necessary because the children are in the same position
+                //    foreach (var child in childrenToDraw)
+                //    {                                                
+                //        if(child.Draw(childrenCanvas, false, childrenLevel, newContext))
+                //        {
+                //            result = true;
+                //        }
+                //        child.MarkAsSeen();                        
+                //    }
+                //}
+            }
+            else
             {
-                var paint = new SKPaint()
+                result = true;
+                foreach (var child in Children)
                 {
-                    Color = GetBorderTopColor(),
-                    Style = SKPaintStyle.Fill
-                };
+                    child.Draw(childrenCanvas, true, childrenLevel, null, 0f, newContext);
+                }
+            }
+
+            // draw border
+            if (borderTop > 0 && borderTop != lastBorderTop || forceDraw || scrollPosition > 0f)
+            {
+                _borderTopPaint.Color = GetBorderTopColor();
 
                 canvas.DrawRect(SKRect.Create(
                     x,
                     y,
                     totalWidth,
                     borderTop
-                    ), paint);
+                    ), _borderBottomPaint);
 
             }
 
-            if (borderBottom > 0)
+            if (borderBottom > 0 && borderBottom != lastBorderBottom || forceDraw)
             {
-                var paint = new SKPaint()
-                {
-                    Color = GetBorderBottomColor(),
-                    Style = SKPaintStyle.Fill
-                };
+                _borderBottomPaint.Color = GetBorderTopColor();
 
                 canvas.DrawRect(SKRect.Create(
                     x,
                     y + totalHeight - borderBottom,
                     totalWidth,
                     borderBottom
-                    ), paint);
+                    ), _borderBottomPaint);
             }
 
-            if (borderLeft > 0)
+            if (borderLeft > 0 && borderLeft != lastBorderLeft || forceDraw)
             {
-                var paint = new SKPaint()
-                {
-                    Color = GetBorderLeftColor(),
-                    Style = SKPaintStyle.Fill
-                };
+                _borderLeftPaint.Color = GetBorderTopColor();
 
                 canvas.DrawRect(SKRect.Create(
                     x,
                     y,
                     borderLeft,
                     totalHeight
-                    ), paint);
+                    ), _borderLeftPaint);
             }
 
-            if (borderRight > 0)
+            if (borderRight > 0 && borderRight != lastBorderRight || forceDraw)
             {
-                var paint = new SKPaint()
-                {
-                    Color = GetBorderRightColor(),
-                    Style = SKPaintStyle.Fill
-                };
+                _borderRightPaint.Color = GetBorderTopColor();
 
                 canvas.DrawRect(SKRect.Create(
                     x + totalWidth - borderRight,
                     y,
                     borderRight,
                     totalHeight
-                    ), paint);
+                    ), _borderRightPaint);
             }
 
-            if(overflow == Overflow.Visible)
+            lastBorderTop = borderTop;
+            lastBorderLeft = borderLeft;
+            lastBorderRight = borderRight;
+            lastBorderBottom = borderBottom;
+
+            YogaNode.MarkLayoutSeen();
+
+            canvas.Translate(0f, translateY);
+            
+            if(clipRect != null)
             {
-                foreach (var child in Children)
-                {
-                    child.Draw(canvas);
-                }
-            }
+                canvas.Restore();
+            }           
+
+            return result;
+        }
+
+        public override bool NeedsToReDraw()
+        {
+            //if(base.NeedsToReDraw())
+            //{
+            //    return true;
+            //}
+
+            //return Children.Any(x => x.NeedsToReDraw());
+            return true;
         }
 
 
         public override void CalculateLayout()
         {
-            foreach(var child in Children)
+            foreach (var child in Children)
             {
                 child.Mesure();
             }
-                        
+
             YogaNode.CalculateLayout();
         }
 
