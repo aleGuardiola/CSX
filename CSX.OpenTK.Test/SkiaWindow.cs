@@ -20,7 +20,7 @@ namespace CSX.OpenTK.Test
 
         private SKSizeI lastSize;
 
-        public SkiaWindow(NativeWindowSettings settings) : base(new GameWindowSettings() { }, settings) { }
+        public SkiaWindow(GameWindowSettings gameSettings, NativeWindowSettings settings) : base(gameSettings, settings) { }
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {

@@ -39,13 +39,12 @@ namespace CSX.OpenTK.Test
             }
         }
 
-        public CSXWindow(NativeWindowSettings settings) : base(settings)
-        {
-            
-        }
-
         bool forceDraw = true;        
         DrawContext? context;
+
+        public CSXWindow(GameWindowSettings gameSettings, NativeWindowSettings settings) : base(gameSettings, settings)
+        {
+        }
 
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
@@ -110,9 +109,6 @@ namespace CSX.OpenTK.Test
         {
             var canvas = e.Surface.Canvas;
 
-            var sw = new Stopwatch();
-            sw.Start();
-
             if (forceDraw || context == null)
             {                
                 context?.Dispose();
@@ -166,11 +162,10 @@ namespace CSX.OpenTK.Test
                     canvas.DrawSurface(surface, 0, 0);
                 }
                 Root.OnEvent(new FrameDrawEvent(time));
-            }            
+            }
 
-            sw.Stop();
-            var drawTime = sw.ElapsedMilliseconds;
-            Console.WriteLine($"Frame Time: {drawTime}ms,  FPS: {1000.0 / drawTime}");
+            Console.Clear();
+            Console.WriteLine($"Frame Time: {time}ms,  FPS: {1.0 / time}");
 
             forceDraw = false;
         }

@@ -5,11 +5,16 @@ using CSX.Skia.Views;
 using System.Drawing;
 using OpenTK.Windowing.Desktop;
 
-var window = new CSXWindow(new NativeWindowSettings()
-{
-    Title = "CSX",
-    Size = new OpenTK.Mathematics.Vector2i(800, 600)
-});
+var window = new CSXWindow(
+    new GameWindowSettings()
+    {
+        RenderFrequency = 60.0
+    },
+    new NativeWindowSettings()
+    {
+        Title = "CSX",
+        Size = new OpenTK.Mathematics.Vector2i(800, 600)
+    });
 
 View root;
 
@@ -33,7 +38,7 @@ root.AppendView(ScrollView3);
 View GetScrollView()
 {
 
-    var totalItems = 100f;
+    var totalItems = 1000f;
     var view = new View(0);
     // view.SetAttribute(NativeAttribute.Width, 512f);
     //view.SetAttribute(NativeAttribute.Flex, 1f);
