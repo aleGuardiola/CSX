@@ -103,13 +103,6 @@ namespace CSX.Skia.Views
 
             base.Draw(canvas, true, level, clipRect, translateY, context);
 
-            canvas.Translate(0f, translateY * -1);
-            if (clipRect != null)
-            {
-                canvas.Save();
-                canvas.ClipRect(clipRect.Value);
-            }
-
             using (var paint = GetPaint())
             {
                 var borderLeftWidth = float.IsNaN(YogaNode.BorderLeftWidth) ? 0 : YogaNode.BorderLeftWidth;
@@ -118,14 +111,6 @@ namespace CSX.Skia.Views
             }
 
             lastDrawText = TextContent;
-
-
-            canvas.Translate(0f, translateY);
-
-            if (clipRect != null)
-            {
-                canvas.Restore();
-            }
 
             return true;
         }

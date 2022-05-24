@@ -1,5 +1,7 @@
 ﻿using CSX.NativeComponents;
 using CSX.Rendering;
+using CSX.Skia.Events;
+using CSX.Skia.Input;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -35,6 +37,106 @@ namespace CSX.Skia.Views
             return false;
         }
 
+        public float GetMaxScroll()
+        {
+            var totalContentLenght = GetContentHeight();
+            return totalContentLenght - (YogaNode.LayoutHeight - YogaNode.LayoutPaddingTop - YogaNode.LayoutPaddingBottom - GetBorderTopWidth() - GetBorderBottomWidth());
+        }
+
+        SKRect UpRect = SKRect.Empty;
+        SKRect DownRect = SKRect.Empty;
+
+        protected override void OnMouseWheel(float offsetX, float offsetY)
+        {
+            var currentScrollPosition = GetScrollPosition();
+            var newScroll = currentScrollPosition - (offsetY * 100);
+            var maxScroll = GetMaxScroll();
+
+            SetAttribute(NativeAttribute.ScrollPosition, Math.Max(0f, Math.Min(maxScroll, newScroll)));
+            base.OnMouseWheel(offsetX, offsetY);
+        }
+
+        protected override void OnLeftClick(SKPoint down, SKPoint up)
+        {
+            if(UpRect.Contains(up) && UpRect.Contains(down))
+            {
+                // scroll up pressed
+                MoveScrollBarPosition(100f);
+            }
+            else if(DownRect.Contains(up) && DownRect.Contains(down))
+            {
+                // scroll down pressed
+                MoveScrollBarPosition(-100f);
+            }
+            base.OnLeftClick(down, up);
+        }
+
+        bool _isCursorScrolling;
+        SKPoint _cursorScrollingZero = SKPoint.Empty;
+        SKPoint _mousePosition = SKPoint.Empty;
+
+        protected override void OnFrameDraw(double time)
+        {
+            if(_isCursorScrolling)
+            {
+                var difference = _cursorScrollingZero - _mousePosition;
+                if(difference.Y == 0)
+                {
+                    DrawContext.SetCursor(CSXSkiaCursor.Move);
+                }
+                else
+                {
+                    if (difference.Y < 0)
+                    {
+                        DrawContext.SetCursor(CSXSkiaCursor.MoveDown);
+                    }
+                    else
+                    {
+                        DrawContext.SetCursor(CSXSkiaCursor.MoveUp);
+                    }
+
+                    MoveScrollBarPosition((float)(difference.Y * 50 * time));
+                }
+            }
+
+            base.OnFrameDraw(time);
+        }
+
+        protected override void OnMouseMove(SKPoint position)
+        {
+            _mousePosition = position;            
+            base.OnMouseMove(position);
+        }
+
+        protected override void OnMouseButtonUp(CSXSkiaMouseButton button, SKPoint position)
+        {
+            if (button == CSXSkiaMouseButton.Middle)
+            {
+                if (_isCursorScrolling)
+                {
+                    DrawContext.SetCursor(CSXSkiaCursor.Default);
+                }
+                else
+                {
+                    DrawContext.SetCursor(CSXSkiaCursor.Move);
+                    _cursorScrollingZero = _mousePosition;
+                }
+                _isCursorScrolling = !_isCursorScrolling;
+            }
+            base.OnMouseButtonUp(button, position);
+        }
+
+        void MoveScrollBarPosition(float offset)
+        {
+            var currentScrollPosition = GetScrollPosition();
+            var newScroll = currentScrollPosition - offset;
+            var maxScroll = GetMaxScroll();
+
+            SetAttribute(NativeAttribute.ScrollPosition, Math.Max(0f, Math.Min(maxScroll, newScroll)));
+        }
+
+
+
         public void RenderScrollBar(SKCanvas canvas)
         {
             var totalContentLenght = GetContentHeight();
@@ -51,8 +153,8 @@ namespace CSX.Skia.Views
             var height = YogaNode.LayoutHeight;
             var width = YogaNode.LayoutWidth;
 
-            var x = YogaNode.LayoutX + width - ScrollBarWidth;
-            var y = YogaNode.LayoutY;
+            var x = AbsoulteX + width - ScrollBarWidth;
+            var y = AbsoluteY;
 
             // render background
             using (var paint = new SKPaint())
@@ -64,9 +166,11 @@ namespace CSX.Skia.Views
 
             var buttonH = ScrollBarWidth * .4f;
             var buttonX = (x + (ScrollBarWidth / 2f)) - (buttonH / 2);
-
+            
             // render buttons
+            UpRect = SKRect.Create(buttonX + TranslatedX, y + 3f + TranslatedY, buttonH, buttonH);
             DrawUpButton(buttonX, y + 3f, buttonH, scrollBarPostion == 0f ? ScrollBarButtonDisabledColor : ScrollBarButtonColor, canvas);
+            DownRect = SKRect.Create(buttonX + TranslatedX, (y + height - buttonH - 3f) + TranslatedY, buttonH, buttonH);
             DrawDownButton(buttonX, y + height - buttonH - 3f, buttonH, scrollBarPostion == 1f ? ScrollBarButtonDisabledColor : ScrollBarButtonColor, canvas);
 
             // render scroll bar           

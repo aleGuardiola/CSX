@@ -1,5 +1,6 @@
 ﻿using CSX.NativeComponents;
 using CSX.Rendering;
+using CSX.Skia.Events;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -184,6 +185,10 @@ namespace CSX.Skia.Views
 
             if (Attributes.TryGetValue(NativeAttribute.ScrollPosition, out var value))
             {
+                if(value == null)
+                {
+                    return 0f;
+                }
                 return (float)value;
             }
 
@@ -192,12 +197,20 @@ namespace CSX.Skia.Views
 
         public float GetContentHeight()
         {
-            return YogaNode.Sum(x => x.LayoutHeight);
+            if(_children.Count == 0)
+            {
+                return 0f;
+            }
+
+            var firstChild = YogaNode.First();
+            var lastChild = YogaNode.Last();
+            return (lastChild.LayoutY - firstChild.LayoutY) + lastChild.LayoutHeight + firstChild.LayoutMarginTop + lastChild.LayoutMarginBottom;
         }
 
         SKPaint _backgroundPaint = new SKPaint()
         {
-            Style = SKPaintStyle.Fill
+            Style = SKPaintStyle.Fill,
+            BlendMode = SKBlendMode.Src
         };
 
         SKPaint _borderTopPaint = new SKPaint()
@@ -226,23 +239,15 @@ namespace CSX.Skia.Views
         float lastBorderLeft = 0f;
         float lastBorderRight = 0f;
 
-        int backgroundLayerSave = -1;
-
-        //SKSurface? _contentSurface;
-        //SKImageInfo _contentInfo;
-
         public override bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context)
         {
-            canvas.Translate(0f, translateY * -1);
-            if (clipRect != null)
-            {
-                canvas.Save();
-                canvas.ClipRect(clipRect.Value);
-            }
+            TranslatedX = canvas.TotalMatrix.TransX;
+            TranslatedY = canvas.TotalMatrix.TransY;
+            DrawContext = context;
 
             var childrenLevel = level + 1;
 
-            SKCanvas childrenCanvas = null;
+            SKCanvas? childrenCanvas = null;
             if (_children.Count > 0)
             {
                 childrenCanvas = context.GetCanvas(childrenLevel);
@@ -253,8 +258,8 @@ namespace CSX.Skia.Views
             var totalWidth = YogaNode.LayoutWidth;
             var totalHeight = YogaNode.LayoutHeight;                       
 
-            var x = YogaNode.LayoutX + context.RelativeToX;
-            var y = YogaNode.LayoutY + context.RelativeToY;
+            var x = AbsoulteX = YogaNode.LayoutX + context.RelativeToX;
+            var y = AbsoluteY = YogaNode.LayoutY + context.RelativeToY;
 
             var newContext = context with { RelativeToX = x, RelativeToY = y };
 
@@ -268,8 +273,6 @@ namespace CSX.Skia.Views
 
             var scrollPosition = GetScrollPosition();
 
-
-
             var contentRect = new SKRect(
                 x + borderLeft,
                 y + borderTop,
@@ -279,6 +282,7 @@ namespace CSX.Skia.Views
             // only draw background when the layout changed
             if(forceDraw || IsDirty || YogaNode.HasNewLayout)
             {
+                result = true;
                 _backgroundPaint.Color = GetBackgroundColor();
                 canvas.DrawRect(contentRect, _backgroundPaint);
             }            
@@ -300,7 +304,7 @@ namespace CSX.Skia.Views
                 //    }
                 //}                
 
-                bool scrollPositionChanged = true;
+                bool scrollPositionChanged = false;
                 if (lastScrollPosition != scrollPosition)
                 {
                     scrollPositionChanged = true;
@@ -319,34 +323,57 @@ namespace CSX.Skia.Views
                 //    //}
                 //}
 
-                // if scroll position changed or the layout changed always draw children
-                if (scrollPositionChanged || YogaNode.HasNewLayout)
-                {       
-                    if(childrenCanvas != null)
-                    {
-                        childrenCanvas.DrawRect(contentRect, new SKPaint() { Color = SKColors.White });
+                // offset the content canvas by what this view is currently translated           
+                contentRect.Offset(canvas.TotalMatrix.TransX, canvas.TotalMatrix.TransY);
 
+                // if scroll position changed or the layout changed always draw children
+                if (scrollPositionChanged || YogaNode.HasNewLayout || forceDraw)
+                {
+                    result = true;
+                    if(childrenCanvas != null)
+                    {                                     
+                        // clear all layers on top
+                        foreach(var surface in context.Surfaces.Skip(childrenLevel))
+                        {
+                            surface.Canvas.DrawRect(contentRect, new SKPaint() { BlendMode = SKBlendMode.Clear });
+                        }
+
+                        childrenCanvas.Save();
+                        childrenCanvas.ClipRect(contentRect);
+                        childrenCanvas.Translate(0f, (scrollPosition * -1) + canvas.TotalMatrix.TransY);
+                        
                         result = true;
                         foreach (var child in Children)
                         {
                             child.Draw(childrenCanvas, true, childrenLevel, contentRect, scrollPosition, newContext);
                             child.MarkAsSeen();
                         }
+
+                        childrenCanvas.Restore();
                     }
                 }
                 else
                 {
-                    var childrenToDraw = Children.Where(x => x.NeedsToReDraw()).ToArray();
-                                        
-                    // draw children
-                    foreach (var child in Children)
+                    if(childrenCanvas != null)
                     {
-                        if(child.Draw(childrenCanvas, false, childrenLevel, contentRect, scrollPosition, newContext))
+                        var childrenToDraw = Children.Where(x => x.NeedsToReDraw()).ToArray();
+
+                        childrenCanvas.Save();
+                        childrenCanvas.ClipRect(contentRect);
+                        childrenCanvas.Translate(0f, scrollPosition * -1);
+
+                        // draw children
+                        foreach (var child in Children)
                         {
-                            result = true;
+                            if (child.Draw(childrenCanvas, false, childrenLevel, contentRect, scrollPosition, newContext))
+                            {
+                                result = true;
+                            }
+                            child.MarkAsSeen();
                         }
-                        child.MarkAsSeen();
-                    }
+
+                        childrenCanvas.Restore();
+                    }                    
                 }
 
                 
@@ -409,7 +436,7 @@ namespace CSX.Skia.Views
             }
 
             // draw border
-            if (borderTop > 0 && borderTop != lastBorderTop || forceDraw || scrollPosition > 0f)
+            if (borderTop > 0 && borderTop != lastBorderTop || forceDraw)
             {
                 _borderTopPaint.Color = GetBorderTopColor();
 
@@ -464,28 +491,35 @@ namespace CSX.Skia.Views
             lastBorderBottom = borderBottom;
 
             YogaNode.MarkLayoutSeen();
-
-            canvas.Translate(0f, translateY);
+            //canvas.Translate(0f, translateY);
             
-            if(clipRect != null)
-            {
-                canvas.Restore();
-            }           
+            //if(clipRect != null)
+            //{
+            //    canvas.Restore();
+            //}           
 
             return result;
         }
 
         public override bool NeedsToReDraw()
         {
-            //if(base.NeedsToReDraw())
-            //{
-            //    return true;
-            //}
+            if (base.NeedsToReDraw())
+            {
+                return true;
+            }
 
-            //return Children.Any(x => x.NeedsToReDraw());
-            return true;
+            return Children.Any(x => x.NeedsToReDraw());            
         }
 
+        public override bool IsLayoutDirty()
+        {
+            if(base.IsLayoutDirty())
+            {
+                return true;
+            }
+
+            return Children.Any(x => x.IsLayoutDirty());
+        }
 
         public override void CalculateLayout()
         {
@@ -495,6 +529,15 @@ namespace CSX.Skia.Views
             }
 
             YogaNode.CalculateLayout();
+        }
+
+        public override void OnEvent(WindowEvent e)
+        {
+            foreach(var child in Children)
+            {
+                child.OnEvent(e);
+            }
+            base.OnEvent(e);
         }
 
     }

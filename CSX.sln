@@ -23,7 +23,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSX.Skia", "CSX.Skia\CSX.Sk
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSX.Skia.Test", "CSX.Skia.Test\CSX.Skia.Test.csproj", "{28B5763B-545C-40B9-A75F-F774057EEDE4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSX.Skia.OpenGLTest", "CSX.Skia.OpenGLTest\CSX.Skia.OpenGLTest.csproj", "{E646FBA0-E40A-4E8C-B8B1-6FD0E4E5F70C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSX.Skia.OpenGLTest", "CSX.Skia.OpenGLTest\CSX.Skia.OpenGLTest.csproj", "{E646FBA0-E40A-4E8C-B8B1-6FD0E4E5F70C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSX.OpenTK.Test", "CSX.OpenTK.Test\CSX.OpenTK.Test.csproj", "{A1A40530-6F55-4AB8-94D7-793FAA80DC5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -77,6 +79,10 @@ Global
 		{E646FBA0-E40A-4E8C-B8B1-6FD0E4E5F70C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E646FBA0-E40A-4E8C-B8B1-6FD0E4E5F70C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E646FBA0-E40A-4E8C-B8B1-6FD0E4E5F70C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1A40530-6F55-4AB8-94D7-793FAA80DC5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1A40530-6F55-4AB8-94D7-793FAA80DC5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1A40530-6F55-4AB8-94D7-793FAA80DC5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1A40530-6F55-4AB8-94D7-793FAA80DC5F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

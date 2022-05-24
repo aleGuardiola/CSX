@@ -1,5 +1,6 @@
 ﻿using CSX.NativeComponents;
 using CSX.Rendering;
+using CSX.Skia.Events;
 using Facebook.Yoga;
 using SkiaSharp;
 using System;
@@ -16,7 +17,9 @@ namespace CSX.Skia.Views
         public bool IsDirty { get; protected set; } = true;
         public YogaNode YogaNode { get; private set; } = new YogaNode();
 
-        public Dictionary<NativeAttribute, object> Attributes { get; } = new Dictionary<NativeAttribute, object>();
+        public Dictionary<NativeAttribute, object?> Attributes { get; } = new Dictionary<NativeAttribute, object>();
+
+        public DrawContext DrawContext { get; protected set; }
 
         public BaseView(ulong id)
         {
@@ -28,11 +31,171 @@ namespace CSX.Skia.Views
             IsDirty = false;
         }
 
+        public float TranslatedY { get; protected set; }
+        public float TranslatedX { get; protected set; }
+
+        public float AbsoulteX { get; protected set; }
+        public float AbsoluteY { get; protected set; }
+
+        public float X => AbsoulteX + TranslatedX;
+        public float Y => AbsoluteY + TranslatedY;
+
+        bool isMouseOver = false;
+        public bool IsLeftClickDown { get; private set; }
+        SKPoint mouseLeftClickPosition = SKPoint.Empty;
+        SKPoint mousePosition = SKPoint.Empty;
+
+        public virtual void OnEvent(WindowEvent e)
+        {
+            var x = X;
+            var y = Y;
+            switch (e)
+            {
+                case OnMouseMoveEvent mouseMove:
+                    {
+                        var rect = new SKRect(x, y, x + YogaNode.LayoutWidth, y + YogaNode.LayoutHeight);
+                        mousePosition = new SKPoint(mouseMove.X, mouseMove.Y);
+                        OnMouseMove(mousePosition);
+                        if (isMouseOver)
+                        {
+                            if (!rect.Contains(mousePosition))
+                            {
+                                OnMouseLeave(mousePosition);
+                                isMouseOver = false;
+                            }
+                        }
+                        else
+                        {
+                            if (rect.Contains(mousePosition))
+                            {
+                                OnMouseEnter(mousePosition);
+                                isMouseOver = true;
+                            }
+                        }
+                    }
+                    break;
+                case MouseDownEvent mouseDown:
+                    {
+                        if (mouseDown.MouseButton == CSXSkiaMouseButton.Left)
+                        {
+                            IsLeftClickDown = true;
+                            mouseLeftClickPosition = mousePosition;
+                        }
+                        var rect = new SKRect(x, y, x + YogaNode.LayoutWidth, y + YogaNode.LayoutHeight);
+                        if (rect.Contains(mousePosition))
+                        {
+                            OnMouseButtonDown(mouseDown.MouseButton, mousePosition);
+                        }
+                    }
+                    break;
+                case MouseUpEvent mouseUp:
+                    {
+                        IsLeftClickDown = false;
+                        var rect = new SKRect(x, y, x + YogaNode.LayoutWidth, y + YogaNode.LayoutHeight);
+                        if (mouseUp.MouseButton == CSXSkiaMouseButton.Left)
+                        {
+                            if (rect.Contains(mouseLeftClickPosition) && rect.Contains(mousePosition))
+                            {
+                                OnLeftClick(mouseLeftClickPosition, mousePosition);
+                            }
+                        }
+                        if (rect.Contains(mousePosition))
+                        {
+                            OnMouseButtonUp(mouseUp.MouseButton, mousePosition);
+                        }
+                    }
+
+                    break;
+                case MouseWheelEvent mouseWheel:
+                    {
+                        var rect = new SKRect(x, y, x + YogaNode.LayoutWidth, y + YogaNode.LayoutHeight);
+                        if (rect.Contains(mousePosition))
+                        {
+                            OnMouseWheel(mouseWheel.OffsetX, mouseWheel.OffsetY);
+                            isMouseOver = false;
+                        }
+                    }
+                    break;
+                case KeyDownEvent keyDown:
+                    OnKeyDown(keyDown.Key);
+                    break;
+
+                case KeyUpEvent keyUp:
+                    OnKeyUp(keyUp.Key);
+                    break;
+
+                case TextInputEvent textInput:
+                    OnText(textInput.Unicode);
+                    break;
+
+                case FrameDrawEvent frameDraw:
+                    OnFrameDraw(frameDraw.Time);
+                    break;
+            }
+        }
+
+        protected virtual void OnFrameDraw(double time)
+        {
+
+        }
+
+        protected virtual void OnMouseMove(SKPoint position)
+        {
+
+        }
+
+        protected virtual void OnMouseButtonDown(CSXSkiaMouseButton button, SKPoint position)
+        {
+
+        }
+
+        protected virtual void OnMouseButtonUp(CSXSkiaMouseButton button, SKPoint position)
+        {
+
+        }
+
+        protected virtual void OnMouseWheel(float offsetX, float offsetY)
+        {
+
+        }
+        protected virtual void OnKeyDown(CSXSkiaKey key)
+        {
+
+        }
+        protected virtual void OnKeyUp(CSXSkiaKey key)
+        {
+
+        }
+        protected virtual void OnText(int unicode)
+        {
+
+        }
+        protected virtual void OnLeftClick(SKPoint down, SKPoint up)
+        {
+
+        }
+        protected virtual void OnMouseEnter(SKPoint position)
+        {
+
+        }
+        protected virtual void OnMouseLeave(SKPoint position)
+        {
+
+        }
+
         public virtual void SetAttribute(NativeAttribute attribute, object? value)
         {
-            if(value == null)
-            { 
-                return; 
+            if (value == null)
+            {
+                return;
+            }
+
+            object? currentValue = null;
+            Attributes.TryGetValue(attribute, out currentValue);
+
+            if (value == currentValue || value.Equals(currentValue))
+            {
+                return;
             }
 
             Attributes[attribute] = value;
@@ -59,7 +222,7 @@ namespace CSX.Skia.Views
                         AlignItems.FlexStart => YogaAlign.FlexStart,
                         AlignItems.FlexEnd => YogaAlign.FlexEnd,
                         AlignItems.Stretch => YogaAlign.Stretch,
-                        AlignItems.Baseline => YogaAlign.Baseline,                        
+                        AlignItems.Baseline => YogaAlign.Baseline,
                         _ => throw new NotImplementedException(),
                     };
                     break;
@@ -130,7 +293,7 @@ namespace CSX.Skia.Views
                     {
                         FlexWrap.NoWrap => YogaWrap.NoWrap,
                         FlexWrap.Wrap => YogaWrap.Wrap,
-                        FlexWrap.WrapReverse => YogaWrap.WrapReverse,                        
+                        FlexWrap.WrapReverse => YogaWrap.WrapReverse,
                         _ => throw new NotImplementedException()
                     };
                     break;
@@ -299,7 +462,9 @@ namespace CSX.Skia.Views
                     break;
             }
 
+
             IsDirty = true;
+
         }
 
 
@@ -313,8 +478,13 @@ namespace CSX.Skia.Views
             return IsDirty || YogaNode.HasNewLayout;
         }
 
+        public virtual bool IsLayoutDirty()
+        {
+            return YogaNode.IsDirty;
+        }
+
         public abstract void CalculateLayout();
-        
+
 
         public abstract bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context);
     }

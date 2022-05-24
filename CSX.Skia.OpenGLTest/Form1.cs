@@ -23,13 +23,13 @@ namespace CSX.Skia.OpenGLTest
         {
             InitializeComponent();
 
-            var width = (float)skControl1.Width;
-            var height = (float)skControl1.Height;
+            var width = (float)skglControl1.Width;
+            var height = (float)skglControl1.Height;
 
             root = new View(0);
             root.SetAttribute(NativeAttribute.Width, width);
             root.SetAttribute(NativeAttribute.Height, height);
-            root.SetAttribute(NativeAttribute.BackgroundColor, Color.White);            
+            root.SetAttribute(NativeAttribute.BackgroundColor, Color.Red);            
 
             ScrollView = GetScrollView();
             ScrollView2 = GetScrollView();
@@ -42,16 +42,14 @@ namespace CSX.Skia.OpenGLTest
             ScrollView GetScrollView()
             {
 
-                var totalItems = 20f;
-                totalScroll = (totalItems * 13f) - (170f - 20f);
-
+                var totalItems = 10000f;
                 var view = new ScrollView(0);
                 // view.SetAttribute(NativeAttribute.Width, 512f);
                 view.SetAttribute(NativeAttribute.Flex, 1f);
-                //view.SetAttribute(NativeAttribute.BackgroundColor, Color.White);
+                //view.SetAttribute(NativeAttribute.BackgroundColor, Color.Blue);
                 view.SetAttribute(NativeAttribute.BorderColor, Color.Black);
-                view.SetAttribute(NativeAttribute.BorderWidth, 10f);
-                // view.SetAttribute(NativeAttribute.MarginTop, 10f);
+                view.SetAttribute(NativeAttribute.BorderWidth, 1f);
+                view.SetAttribute(NativeAttribute.MarginTop, 10f);
                 // view.SetAttribute(NativeAttribute.ScrollPosition, totalScroll/*RandomFloat(0, totalScroll)*/);
 
                 Random rnd = new Random();
@@ -61,7 +59,7 @@ namespace CSX.Skia.OpenGLTest
                     var text = new Text(1);
                                         
                     text.SetAttribute(NativeAttribute.BorderColor, Color.Black);
-                    //text.SetAttribute(NativeAttribute.MarginTop, 10f);                    
+                    text.SetAttribute(NativeAttribute.MarginTop, 10f);                    
                     text.SetAttribute(NativeAttribute.FontWeight, CSX.NativeComponents.FontWeight.Bold);
                     // text.SetAttribute(NativeAttribute.BorderWidth, 1f);
                     text.SetAttribute(NativeAttribute.Width, 200f);
@@ -76,6 +74,10 @@ namespace CSX.Skia.OpenGLTest
             }
 
             root.CalculateLayout();
+
+            var scrollView = root.Children.First() as View;
+            totalScroll = scrollView.GetContentHeight() - (scrollView.YogaNode.LayoutHeight - scrollView.GetBorderTopWidth() - scrollView.GetBorderBottomWidth());
+
             //RenderTimer = new Timer(OnRender, null, 0, 1000);
 
         }
@@ -98,22 +100,26 @@ namespace CSX.Skia.OpenGLTest
             var sw = new Stopwatch();
             sw.Start();
 
-            if(isFirstDraw)
+            if (isFirstDraw)
             {
                 context = new DrawContext()
                 {
-                    ImageInfo = e.Info
+                    ImageInfo = e.Info,
+                    SurfaceFactory = () =>
+                    {
+                        return SKSurface.Create(e.Surface.Context, true, e.Info);
+                    }
                 };
             }
 
-            if(root.NeedsToReDraw())
+            if (root.NeedsToReDraw())
             {
                 var drawAnything = root.Draw(context.GetCanvas(0), isFirstDraw, 0, null, 0f, context);
                 root.MarkAsSeen();
                 root.YogaNode.MarkLayoutSeen();
 
-                canvas.Clear();
-                foreach(var surface in context.Surfaces)
+                canvas.Clear(SKColors.White);
+                foreach (var surface in context.Surfaces)
                 {
                     canvas.DrawSurface(surface, 0, 0);
                 }
@@ -123,11 +129,11 @@ namespace CSX.Skia.OpenGLTest
             sw.Stop();
             var drawTime = sw.ElapsedMilliseconds;
 
-            label1.Text = $"Frame Time: {drawTime}ms,  FPS: {1000.0/drawTime}";
+            label1.Text = $"Frame Time: {drawTime}ms,  FPS: {1000.0 / drawTime}";
 
             isFirstDraw = false;
 
-            skControl1.Invalidate();
+            skglControl1.Invalidate();
         }
 
 
@@ -181,12 +187,12 @@ namespace CSX.Skia.OpenGLTest
 
             isFirstDraw = false;
 
-            // skControl1.Invalidate();
+            //skControl1.Invalidate();
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            skControl1.Invalidate();
+            skglControl1.Invalidate();
         }
     }
 }

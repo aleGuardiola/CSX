@@ -30,8 +30,8 @@
         {
             this.label1 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
-            this.skControl1 = new SkiaSharp.Views.Desktop.SKControl();
             this.button2 = new System.Windows.Forms.Button();
+            this.skglControl1 = new SkiaSharp.Views.Desktop.SKGLControl();
             this.SuspendLayout();
             // 
             // label1
@@ -53,15 +53,6 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // skControl1
-            // 
-            this.skControl1.Location = new System.Drawing.Point(-1, 50);
-            this.skControl1.Name = "skControl1";
-            this.skControl1.Size = new System.Drawing.Size(972, 657);
-            this.skControl1.TabIndex = 3;
-            this.skControl1.Text = "skControl1";
-            this.skControl1.PaintSurface += new System.EventHandler<SkiaSharp.Views.Desktop.SKPaintSurfaceEventArgs>(this.skControl1_PaintSurface);
-            // 
             // button2
             // 
             this.button2.Location = new System.Drawing.Point(755, 21);
@@ -72,13 +63,24 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
+            // skglControl1
+            // 
+            this.skglControl1.BackColor = System.Drawing.Color.Black;
+            this.skglControl1.Location = new System.Drawing.Point(0, 49);
+            this.skglControl1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.skglControl1.Name = "skglControl1";
+            this.skglControl1.Size = new System.Drawing.Size(970, 654);
+            this.skglControl1.TabIndex = 5;
+            this.skglControl1.VSync = false;
+            this.skglControl1.PaintSurface += new System.EventHandler<SkiaSharp.Views.Desktop.SKPaintGLSurfaceEventArgs>(this.skglControl1_PaintSurface);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(970, 704);
+            this.Controls.Add(this.skglControl1);
             this.Controls.Add(this.button2);
-            this.Controls.Add(this.skControl1);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.label1);
             this.Name = "Form1";
@@ -91,7 +93,7 @@
         #endregion
         private Label label1;
         private Button button1;
-        private SkiaSharp.Views.Desktop.SKControl skControl1;
         private Button button2;
+        private SkiaSharp.Views.Desktop.SKGLControl skglControl1;
     }
 }
