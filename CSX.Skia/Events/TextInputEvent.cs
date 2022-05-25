@@ -8,7 +8,7 @@ namespace CSX.Skia.Events
 {
     public class TextInputEvent : WindowEvent
     {
-        public TextInputEvent(int unicode)
+        public TextInputEvent(ulong id, int unicode) : base(id)
         {
             Unicode = unicode;
         }

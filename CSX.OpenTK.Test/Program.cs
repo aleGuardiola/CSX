@@ -8,7 +8,8 @@ using OpenTK.Windowing.Desktop;
 var window = new CSXWindow(
     new GameWindowSettings()
     {
-        RenderFrequency = 60.0
+        RenderFrequency = 60.0,
+        UpdateFrequency = 60.0
     },
     new NativeWindowSettings()
     {
@@ -39,14 +40,14 @@ View GetScrollView()
 {
 
     var totalItems = 1000f;
-    var view = new View(0);
+    var view = new ScrollView(0);
     // view.SetAttribute(NativeAttribute.Width, 512f);
     //view.SetAttribute(NativeAttribute.Flex, 1f);
-    //view.SetAttribute(NativeAttribute.Height, 500f);
+    view.SetAttribute(NativeAttribute.Height, 500f);
     view.SetAttribute(NativeAttribute.MarginRight, 20f);
     //view.SetAttribute(NativeAttribute.BackgroundColor, Color.Blue);
     view.SetAttribute(NativeAttribute.BorderColor, Color.Black);
-    view.SetAttribute(NativeAttribute.BorderWidth, 1f);
+    // view.SetAttribute(NativeAttribute.BorderWidth, 1f);
     view.SetAttribute(NativeAttribute.MarginTop, 10f);
     // view.SetAttribute(NativeAttribute.ScrollPosition, totalScroll/*RandomFloat(0, totalScroll)*/);
 
@@ -54,7 +55,7 @@ View GetScrollView()
 
     for (int i = 0; i < totalItems; i++)
     {
-        var text = new Text(1);
+        var text = new TextInput(1);
 
         text.SetAttribute(NativeAttribute.BorderColor, Color.Black);
         text.SetAttribute(NativeAttribute.MarginTop, 10f);

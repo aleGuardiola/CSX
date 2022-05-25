@@ -8,7 +8,7 @@ namespace CSX.Skia.Events
 {
     public class KeyUpEvent : WindowEvent
     {
-        public KeyUpEvent(CSXSkiaKey key)
+        public KeyUpEvent(ulong id, CSXSkiaKey key) : base(id)
         {
             Key = key;
         }

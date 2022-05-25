@@ -8,7 +8,7 @@ namespace CSX.Skia.Events
 {
     public class MouseWheelEvent : WindowEvent
     {
-        public MouseWheelEvent(float offsetX, float offsetY)
+        public MouseWheelEvent(ulong id, float offsetX, float offsetY) : base(id)
         {
             OffsetX = offsetX;
             OffsetY = offsetY;

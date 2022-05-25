@@ -8,7 +8,7 @@ namespace CSX.Skia.Events
 {
     public class FrameDrawEvent : WindowEvent
     {
-        public FrameDrawEvent(double time)
+        public FrameDrawEvent(ulong id, double time) : base(id)
         {
             Time = time;
         }

@@ -17,11 +17,17 @@ namespace CSX.Skia.Views
         public View(ulong id) : base(id)
         {
         }
-
+                
         public IEnumerable<BaseView> Children => _children;
 
         public void AppendView(BaseView view)
         {
+            if(view.Parent != null)
+            {
+                throw new InvalidOperationException("View to append already have a parent");
+            }
+
+            view.Parent = this;
             _children.Add(view);
             YogaNode.Insert(YogaNode.Count, view.YogaNode);
             IsDirty = true;
@@ -29,6 +35,8 @@ namespace CSX.Skia.Views
 
         public void RemoveAt(int index)
         {
+            var child = _children[index];
+            child.Parent = null;
             YogaNode.RemoveAt(index);
             _children.RemoveAt(index);
             IsDirty = true;
@@ -36,6 +44,10 @@ namespace CSX.Skia.Views
 
         public void Clear()
         {
+            foreach(var child in _children)
+            {
+                child.Parent = null;
+            }
             YogaNode.Clear();
             _children.Clear();
             IsDirty = true;
@@ -238,6 +250,25 @@ namespace CSX.Skia.Views
         float lastBorderBottom = 0f;
         float lastBorderLeft = 0f;
         float lastBorderRight = 0f;
+
+        public override void OnEvent(WindowEvent ev)
+        {
+            if (_children.Count == 0)
+            {
+                base.OnEvent(ev);
+                return;
+            }
+                        
+            foreach(var child in _children)
+            {
+                child.OnEvent(ev);
+            }
+
+            if(ev.Propagate)
+            {
+                base.OnEvent(ev);
+            }
+        }
 
         public override bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context)
         {
@@ -529,15 +560,6 @@ namespace CSX.Skia.Views
             }
 
             YogaNode.CalculateLayout();
-        }
-
-        public override void OnEvent(WindowEvent e)
-        {
-            foreach(var child in Children)
-            {
-                child.OnEvent(e);
-            }
-            base.OnEvent(e);
         }
 
     }

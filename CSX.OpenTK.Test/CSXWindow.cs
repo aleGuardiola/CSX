@@ -20,6 +20,9 @@ namespace CSX.OpenTK.Test
     public class CSXWindow : SkiaWindow
     {
         BaseView? _root = null;
+
+        ulong _eventId = 1;
+
         public BaseView? Root 
         { 
             get
@@ -48,37 +51,37 @@ namespace CSX.OpenTK.Test
 
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
-            Root?.OnEvent(new KeyDownEvent((CSXSkiaKey)(int)e.Key));
+            Root?.OnEvent(new KeyDownEvent(GetNewEventId(), (CSXSkiaKey)(int)e.Key));
             base.OnKeyDown(e);
         }
 
         protected override void OnKeyUp(KeyboardKeyEventArgs e)
         {
-            Root?.OnEvent(new KeyUpEvent((CSXSkiaKey)(int)e.Key));
+            Root?.OnEvent(new KeyUpEvent(GetNewEventId(), (CSXSkiaKey)(int)e.Key));
             base.OnKeyUp(e);
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-            Root?.OnEvent(new MouseDownEvent((CSXSkiaMouseButton)(int)e.Button));
+            Root?.OnEvent(new MouseDownEvent(GetNewEventId(), (CSXSkiaMouseButton)(int)e.Button));
             base.OnMouseDown(e);
         }
 
         protected override void OnMouseUp(MouseButtonEventArgs e)
         {
-            Root?.OnEvent(new MouseUpEvent((CSXSkiaMouseButton)(int)e.Button));
+            Root?.OnEvent(new MouseUpEvent(GetNewEventId(), (CSXSkiaMouseButton)(int)e.Button));
             base.OnMouseUp(e);
         }
 
         protected override void OnMouseMove(MouseMoveEventArgs e)
         {
-            Root?.OnEvent(new OnMouseMoveEvent(e.X, e.Y));
+            Root?.OnEvent(new OnMouseMoveEvent(GetNewEventId(), e.X, e.Y));
             base.OnMouseMove(e);
         }
 
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
-            Root?.OnEvent(new MouseWheelEvent(e.OffsetX, e.OffsetY));
+            Root?.OnEvent(new MouseWheelEvent(GetNewEventId(), e.OffsetX, e.OffsetY));
             base.OnMouseWheel(e);
         }
 
@@ -92,7 +95,7 @@ namespace CSX.OpenTK.Test
 
         protected override void OnTextInput(TextInputEventArgs e)
         {
-            _root?.OnEvent(new TextInputEvent(e.Unicode));
+            _root?.OnEvent(new TextInputEvent(GetNewEventId(), e.Unicode));
             base.OnTextInput(e);
         }
 
@@ -161,7 +164,7 @@ namespace CSX.OpenTK.Test
                 {
                     canvas.DrawSurface(surface, 0, 0);
                 }
-                Root.OnEvent(new FrameDrawEvent(time));
+                Root.OnEvent(new FrameDrawEvent(GetNewEventId(), time));
             }
 
             Console.Clear();
@@ -169,5 +172,9 @@ namespace CSX.OpenTK.Test
 
             forceDraw = false;
         }
+
+        ulong GetNewEventId()
+            => _eventId ++;
+
     }
 }

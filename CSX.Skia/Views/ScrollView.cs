@@ -46,41 +46,47 @@ namespace CSX.Skia.Views
         SKRect UpRect = SKRect.Empty;
         SKRect DownRect = SKRect.Empty;
 
-        protected override void OnMouseWheel(float offsetX, float offsetY)
+        protected override void OnMouseWheel(MouseWheelEvent ev)
         {
             var currentScrollPosition = GetScrollPosition();
-            var newScroll = currentScrollPosition - (offsetY * 100);
+            var newScroll = currentScrollPosition - (ev.OffsetY * 100);
             var maxScroll = GetMaxScroll();
 
             SetAttribute(NativeAttribute.ScrollPosition, Math.Max(0f, Math.Min(maxScroll, newScroll)));
-            base.OnMouseWheel(offsetX, offsetY);
+
+            if(newScroll >= 0f && newScroll <= maxScroll)
+            {
+                ev.DontPropagate();
+            }            
+
+            base.OnMouseWheel(ev);
         }
 
-        protected override void OnLeftClick(SKPoint down, SKPoint up)
+        protected override void OnLeftClick(MouseUpEvent ev)
         {
-            if(UpRect.Contains(up) && UpRect.Contains(down))
-            {
-                // scroll up pressed
-                MoveScrollBarPosition(100f);
-            }
-            else if(DownRect.Contains(up) && DownRect.Contains(down))
-            {
-                // scroll down pressed
-                MoveScrollBarPosition(-100f);
-            }
-            base.OnLeftClick(down, up);
+            //if (UpRect.Contains(up) && UpRect.Contains(down))
+            //{
+            //    // scroll up pressed
+            //    MoveScrollBarPosition(100f);
+            //}
+            //else if (DownRect.Contains(up) && DownRect.Contains(down))
+            //{
+            //    // scroll down pressed
+            //    MoveScrollBarPosition(-100f);
+            //}
+            base.OnLeftClick(ev);
         }
 
         bool _isCursorScrolling;
         SKPoint _cursorScrollingZero = SKPoint.Empty;
         SKPoint _mousePosition = SKPoint.Empty;
 
-        protected override void OnFrameDraw(double time)
+        protected override void OnFrameDraw(FrameDrawEvent ev)
         {
-            if(_isCursorScrolling)
+            if (_isCursorScrolling)
             {
                 var difference = _cursorScrollingZero - _mousePosition;
-                if(difference.Y == 0)
+                if (difference.Y == 0)
                 {
                     DrawContext.SetCursor(CSXSkiaCursor.Move);
                 }
@@ -95,23 +101,24 @@ namespace CSX.Skia.Views
                         DrawContext.SetCursor(CSXSkiaCursor.MoveUp);
                     }
 
-                    MoveScrollBarPosition((float)(difference.Y * 50 * time));
+                    MoveScrollBarPosition((float)(difference.Y * 50 * ev.Time));
                 }
             }
 
-            base.OnFrameDraw(time);
+            base.OnFrameDraw(ev);
         }
 
-        protected override void OnMouseMove(SKPoint position)
+        protected override void OnMouseMove(OnMouseMoveEvent ev)
         {
-            _mousePosition = position;            
-            base.OnMouseMove(position);
+            _mousePosition = new SKPoint(ev.X, ev.Y);
+            base.OnMouseMove(ev);
         }
 
-        protected override void OnMouseButtonUp(CSXSkiaMouseButton button, SKPoint position)
+        protected override void OnMouseButtonUp(MouseUpEvent ev)
         {
-            if (button == CSXSkiaMouseButton.Middle)
+            if (ev.MouseButton == CSXSkiaMouseButton.Middle)
             {
+                ev.DontPropagate();
                 if (_isCursorScrolling)
                 {
                     DrawContext.SetCursor(CSXSkiaCursor.Default);
@@ -123,7 +130,7 @@ namespace CSX.Skia.Views
                 }
                 _isCursorScrolling = !_isCursorScrolling;
             }
-            base.OnMouseButtonUp(button, position);
+            base.OnMouseButtonUp(ev);
         }
 
         void MoveScrollBarPosition(float offset)

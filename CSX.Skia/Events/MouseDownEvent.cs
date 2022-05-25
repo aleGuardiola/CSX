@@ -8,7 +8,7 @@ namespace CSX.Skia.Events
 {
     public class MouseDownEvent : WindowEvent
     {
-        public MouseDownEvent(CSXSkiaMouseButton mouseButton)
+        public MouseDownEvent(ulong id, CSXSkiaMouseButton mouseButton) : base(id)
         {
             MouseButton = mouseButton;
         }

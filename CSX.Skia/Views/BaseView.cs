@@ -21,6 +21,8 @@ namespace CSX.Skia.Views
 
         public DrawContext DrawContext { get; protected set; }
 
+        public BaseView? Parent { get; internal set; }
+
         public BaseView(ulong id)
         {
             Id = id;
@@ -47,6 +49,7 @@ namespace CSX.Skia.Views
 
         public virtual void OnEvent(WindowEvent e)
         {
+            // e.MarkAsHandled();            
             var x = X;
             var y = Y;
             switch (e)
@@ -55,12 +58,12 @@ namespace CSX.Skia.Views
                     {
                         var rect = new SKRect(x, y, x + YogaNode.LayoutWidth, y + YogaNode.LayoutHeight);
                         mousePosition = new SKPoint(mouseMove.X, mouseMove.Y);
-                        OnMouseMove(mousePosition);
+                        OnMouseMove(mouseMove);
                         if (isMouseOver)
                         {
                             if (!rect.Contains(mousePosition))
                             {
-                                OnMouseLeave(mousePosition);
+                                OnMouseLeave(mouseMove);
                                 isMouseOver = false;
                             }
                         }
@@ -68,7 +71,7 @@ namespace CSX.Skia.Views
                         {
                             if (rect.Contains(mousePosition))
                             {
-                                OnMouseEnter(mousePosition);
+                                OnMouseEnter(mouseMove);
                                 isMouseOver = true;
                             }
                         }
@@ -84,7 +87,7 @@ namespace CSX.Skia.Views
                         var rect = new SKRect(x, y, x + YogaNode.LayoutWidth, y + YogaNode.LayoutHeight);
                         if (rect.Contains(mousePosition))
                         {
-                            OnMouseButtonDown(mouseDown.MouseButton, mousePosition);
+                            OnMouseButtonDown(mouseDown);
                         }
                     }
                     break;
@@ -96,12 +99,12 @@ namespace CSX.Skia.Views
                         {
                             if (rect.Contains(mouseLeftClickPosition) && rect.Contains(mousePosition))
                             {
-                                OnLeftClick(mouseLeftClickPosition, mousePosition);
+                                OnLeftClick(mouseUp);
                             }
                         }
                         if (rect.Contains(mousePosition))
                         {
-                            OnMouseButtonUp(mouseUp.MouseButton, mousePosition);
+                            OnMouseButtonUp(mouseUp);
                         }
                     }
 
@@ -111,76 +114,77 @@ namespace CSX.Skia.Views
                         var rect = new SKRect(x, y, x + YogaNode.LayoutWidth, y + YogaNode.LayoutHeight);
                         if (rect.Contains(mousePosition))
                         {
-                            OnMouseWheel(mouseWheel.OffsetX, mouseWheel.OffsetY);
+                            OnMouseWheel(mouseWheel);
                             isMouseOver = false;
                         }
                     }
                     break;
                 case KeyDownEvent keyDown:
-                    OnKeyDown(keyDown.Key);
+                    OnKeyDown(keyDown);
                     break;
 
                 case KeyUpEvent keyUp:
-                    OnKeyUp(keyUp.Key);
+                    OnKeyUp(keyUp);
                     break;
 
                 case TextInputEvent textInput:
-                    OnText(textInput.Unicode);
+                    OnText(textInput);
                     break;
 
                 case FrameDrawEvent frameDraw:
-                    OnFrameDraw(frameDraw.Time);
+                    OnFrameDraw(frameDraw);
                     break;
             }
-        }
-
-        protected virtual void OnFrameDraw(double time)
-        {
 
         }
 
-        protected virtual void OnMouseMove(SKPoint position)
+        protected virtual void OnFrameDraw(FrameDrawEvent ev)
         {
-
+            ev.MarkAsHandled();
         }
 
-        protected virtual void OnMouseButtonDown(CSXSkiaMouseButton button, SKPoint position)
+        protected virtual void OnMouseMove(OnMouseMoveEvent ev)
         {
-
+            ev.MarkAsHandled();
         }
 
-        protected virtual void OnMouseButtonUp(CSXSkiaMouseButton button, SKPoint position)
+        protected virtual void OnMouseButtonDown(MouseDownEvent ev)
         {
-
+            ev.MarkAsHandled();
         }
 
-        protected virtual void OnMouseWheel(float offsetX, float offsetY)
+        protected virtual void OnMouseButtonUp(MouseUpEvent ev)
         {
-
+            ev.MarkAsHandled();
         }
-        protected virtual void OnKeyDown(CSXSkiaKey key)
-        {
 
+        protected virtual void OnMouseWheel(MouseWheelEvent ev)
+        {
+            ev.MarkAsHandled();
         }
-        protected virtual void OnKeyUp(CSXSkiaKey key)
+        protected virtual void OnKeyDown(KeyDownEvent ev)
         {
-
+            ev.MarkAsHandled();
         }
-        protected virtual void OnText(int unicode)
+        protected virtual void OnKeyUp(KeyUpEvent ev)
         {
-
+            ev.MarkAsHandled();
         }
-        protected virtual void OnLeftClick(SKPoint down, SKPoint up)
+        protected virtual void OnText(TextInputEvent ev)
         {
-
+            ev.MarkAsHandled();
         }
-        protected virtual void OnMouseEnter(SKPoint position)
+        protected virtual void OnLeftClick(MouseUpEvent ev)
         {
-
+            ev.MarkAsHandled();
         }
-        protected virtual void OnMouseLeave(SKPoint position)
+        protected virtual void OnMouseEnter(OnMouseMoveEvent ev)
         {
-
+            ev.MarkAsHandled();
+        }
+        protected virtual void OnMouseLeave(OnMouseMoveEvent ev)
+        {
+            ev.MarkAsHandled();
         }
 
         public virtual void SetAttribute(NativeAttribute attribute, object? value)

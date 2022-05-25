@@ -8,7 +8,7 @@ namespace CSX.Skia.Events
 {
     public class OnMouseMoveEvent : WindowEvent
     {
-        public OnMouseMoveEvent(float x, float y)
+        public OnMouseMoveEvent(ulong id, float x, float y) : base(id)
         {
             X = x;
             Y = y;
