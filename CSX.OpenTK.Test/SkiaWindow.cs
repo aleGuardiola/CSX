@@ -4,6 +4,8 @@ using OpenTK;
 using OpenTK.Windowing.Common;
 using SkiaSharp;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using OpenTK.Mathematics;
 
 namespace CSX.OpenTK.Test
 {
@@ -20,10 +22,18 @@ namespace CSX.OpenTK.Test
 
         private SKSizeI lastSize;
 
-        public SkiaWindow(GameWindowSettings gameSettings, NativeWindowSettings settings) : base(gameSettings, settings) { }
-
-        protected override void OnRenderFrame(FrameEventArgs args)
+        public SkiaWindow(GameWindowSettings gameSettings, NativeWindowSettings settings) : base(gameSettings, settings) 
         {
+            
+        }
+
+        public override void SwapBuffers()
+        {
+            base.SwapBuffers();
+        }
+             
+        protected override void OnRenderFrame(FrameEventArgs args)
+        {            
             // create the contexts if not done already
             if (grContext == null)
             {

@@ -78,142 +78,96 @@ namespace CSX.NativeComponents
     }
     public record LayoutStyleProps : Props
     {
-        [NativeAttribute(NativeAttribute.AlignContent)]
         public AlignContent? AlignContent { get; init; } = NativeComponents.AlignContent.FlexStart;
 
-        [NativeAttribute(NativeAttribute.AlignItems)]
         public AlignItems? AlignItems { get; init; }
 
-        [NativeAttribute(NativeAttribute.AlignSelf)]
         public AlignSelf? AlignSelf { get; init; }
 
-        [NativeAttribute(NativeAttribute.AspectRatio)]
         public float? AspectRatio { get; init; }
 
-        [NativeAttribute(NativeAttribute.Bottom)]
         public float? Bottom { get; init; }
 
-        [NativeAttribute(NativeAttribute.Direction)]
         public Direction? Direction { get; init; }
 
-        [NativeAttribute(NativeAttribute.Display)]
         public Display? Display { get; init; }
 
-        [NativeAttribute(NativeAttribute.End)]
         public float? End { get; init; }
 
-        [NativeAttribute(NativeAttribute.Flex)]
         public float? Flex { get; init; }
 
-        [NativeAttribute(NativeAttribute.FlexBasis)]
-        public float? FlexBasis { get; init; }
+        public CSXValue? FlexBasis { get; init; }
 
-        [NativeAttribute(NativeAttribute.FlexDirection)]
         public FlexDirection? FlexDirection { get; init; } = NativeComponents.FlexDirection.Column;
 
-        [NativeAttribute(NativeAttribute.FlexGrow)]
         public float? FlexGrow { get; init; }
 
-        [NativeAttribute(NativeAttribute.FlexShrink)]
         public float? FlexShrink { get; init; } = 0;
 
-        [NativeAttribute(NativeAttribute.FlexWrap)]
         public FlexWrap? FlexWrap { get; init; }
 
-        [NativeAttribute(NativeAttribute.Height)]
-        public float? Height { get; init; }
+        public CSXValue? Height { get; init; }
 
-        [NativeAttribute(NativeAttribute.JustifyContent)]
         public JustifyContent? JustifyContent { get; init; }
 
-        [NativeAttribute(NativeAttribute.Left)]
         public float? Left { get; init; }
 
-        [NativeAttribute(NativeAttribute.Margin)]
         public float? Margin { get; init; }
 
-        [NativeAttribute(NativeAttribute.MarginBottom)]
         public float? MarginBottom { get; init; }
 
-        [NativeAttribute(NativeAttribute.MarginEnd)]
         public float? MarginEnd { get; init; }
 
-        [NativeAttribute(NativeAttribute.MarginHorizontal)]
         public float? MarginHorizontal { get; init; }
 
-        [NativeAttribute(NativeAttribute.MarginLeft)]
         public float? MarginLeft { get; init; }
 
-        [NativeAttribute(NativeAttribute.MarginRight)]
         public float? MarginRight { get; init; }
 
-        [NativeAttribute(NativeAttribute.MarginStart)]
         public float? MarginStart { get; init; }
 
-        [NativeAttribute(NativeAttribute.MarginTop)]
         public float? MarginTop { get; init; }
 
-        [NativeAttribute(NativeAttribute.MarginVertical)]
         public float? MarginVertical { get; init; }
 
-        [NativeAttribute(NativeAttribute.MaxHeight)]
-        public float? MaxHeight { get; init; }
+        public CSXValue? MaxHeight { get; init; }
 
-        [NativeAttribute(NativeAttribute.MaxWidth)]
-        public float? MaxWidth { get; init; }
+        public CSXValue? MaxWidth { get; init; }
 
-        [NativeAttribute(NativeAttribute.MinHeight)]
-        public float? MinHeight { get; init; }
+        public CSXValue? MinHeight { get; init; }
 
-        [NativeAttribute(NativeAttribute.MinWidth)]
-        public float? MinWidth { get; init; }
+        public CSXValue? MinWidth { get; init; }
 
-        [NativeAttribute(NativeAttribute.Overflow)]
         public Overflow? Overflow { get; init; }
 
-        [NativeAttribute(NativeAttribute.Padding)]
         public float? Padding { get; init; }
 
-        [NativeAttribute(NativeAttribute.PaddingBottom)]
         public float? PaddingBottom { get; init; }
 
-        [NativeAttribute(NativeAttribute.PaddingEnd)]
         public float? PaddingEnd { get; init; }
 
-        [NativeAttribute(NativeAttribute.PaddingHorizontal)]
         public float? PaddingHorizontal { get; init; }
 
-        [NativeAttribute(NativeAttribute.PaddingLeft)]
         public float? PaddingLeft { get; init; }
 
-        [NativeAttribute(NativeAttribute.PaddingRight)]
         public float? PaddingRight { get; init; }
 
-        [NativeAttribute(NativeAttribute.PaddingStart)]
         public float? PaddingStart { get; init; }
 
-        [NativeAttribute(NativeAttribute.PaddingTop)]
         public float? PaddingTop { get; init; }
 
-        [NativeAttribute(NativeAttribute.PaddingVertical)]
         public float? PaddingVertical { get; init; }
 
-        [NativeAttribute(NativeAttribute.Position)]
         public Position? Position { get; init; }
 
-        [NativeAttribute(NativeAttribute.Right)]
         public float? Right { get; init; }
 
-        [NativeAttribute(NativeAttribute.Start)]
         public float? Start { get; init; }
 
-        [NativeAttribute(NativeAttribute.Top)]
         public float? Top { get; init; }
 
-        [NativeAttribute(NativeAttribute.Width)]
-        public float? Width { get; init; }
+        public CSXValue? Width { get; init; }
 
-        [NativeAttribute(NativeAttribute.ZIndex)]
-        public float? ZIndex { get; init; }
+        public int? ZIndex { get; init; }
     }
 }

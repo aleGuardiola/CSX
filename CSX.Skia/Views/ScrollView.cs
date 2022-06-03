@@ -2,6 +2,7 @@
 using CSX.Rendering;
 using CSX.Skia.Events;
 using CSX.Skia.Input;
+using Facebook.Yoga;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -21,16 +22,64 @@ namespace CSX.Skia.Views
         public Color ScrollBarButtonColor = Color.White;
         public Color ScrollBarButtonDisabledColor = ColorTranslator.FromHtml("#808080");
 
-        public ScrollView(ulong id) : base(id)
+        public View Content;
+        View ScrollBar;
+
+        public ScrollView(ulong id, View scrollBar) : base(id)
         {
-            SetAttribute(NativeAttribute.Overflow, Overflow.Scroll);
+            Content = new View(id);
+            ScrollBar = scrollBar;
+            // Content.SetAttribute(NativeAttribute.Flex, 1f);
+
+            Content.SetAttribute(NativeAttribute.Overflow, Overflow.Scroll);
+            Content.SetAttribute(NativeAttribute.MarginRight, ScrollBar.YogaNode.Width.Value);
+
+            Content.Parent = this;
+            _children.Add(Content);
+            YogaNode.Insert(YogaNode.Count, Content.YogaNode);
+
+            ScrollBar.Parent = this;
+            _children.Add(ScrollBar);
+            YogaNode.Insert(YogaNode.Count, ScrollBar.YogaNode);
+
+            //SetAttribute(NativeAttribute.AlignContent, AlignContent.Stretch);
+            //SetAttribute(NativeAttribute.Overflow, Overflow.Scroll);
+        }
+
+        public override void AppendView(BaseView view)
+        {
+            Content.AppendView(view);
+        }
+
+        public override void Clear()
+        {
+            Content.Clear();
+        }
+
+        public override void RemoveAt(int index)
+        {
+            Content.RemoveAt(index);
+        }
+
+        public override void SetAttribute(NativeAttribute attribute, object? value)
+        {
+            if(attribute == NativeAttribute.Padding ||
+                attribute == NativeAttribute.PaddingLeft ||
+                attribute == NativeAttribute.PaddingRight ||
+                attribute == NativeAttribute.PaddingTop ||
+                attribute == NativeAttribute.PaddingBottom)
+            {
+                Content.SetAttribute(attribute, value);
+                return;
+            }
+            base.SetAttribute(attribute, value);
         }
 
         public override bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context)
         {
             if (base.Draw(canvas, forceDraw, level, clipRect, translateY, context))
             {
-                RenderScrollBar(canvas);
+               // RenderScrollBar(canvas);
                 return true;
             }            
 
@@ -39,8 +88,14 @@ namespace CSX.Skia.Views
 
         public float GetMaxScroll()
         {
-            var totalContentLenght = GetContentHeight();
-            return totalContentLenght - (YogaNode.LayoutHeight - YogaNode.LayoutPaddingTop - YogaNode.LayoutPaddingBottom - GetBorderTopWidth() - GetBorderBottomWidth());
+            var totalContentLenght = Content.GetContentHeight();
+            return totalContentLenght - Content.YogaNode.LayoutHeight;/* - (YogaNode.LayoutHeight - YogaNode.LayoutPaddingTop - YogaNode.LayoutPaddingBottom - GetBorderTopWidth() - GetBorderBottomWidth())*/;
+        }
+
+        public void SetScrollPosition(float position)
+        {
+            var maxScroll = GetMaxScroll();
+            Content.SetAttribute(NativeAttribute.ScrollPosition, Math.Max(0f, Math.Min(maxScroll, position)));
         }
 
         SKRect UpRect = SKRect.Empty;
@@ -48,11 +103,11 @@ namespace CSX.Skia.Views
 
         protected override void OnMouseWheel(MouseWheelEvent ev)
         {
-            var currentScrollPosition = GetScrollPosition();
+            var currentScrollPosition = Content.GetScrollPosition();
             var newScroll = currentScrollPosition - (ev.OffsetY * 100);
             var maxScroll = GetMaxScroll();
 
-            SetAttribute(NativeAttribute.ScrollPosition, Math.Max(0f, Math.Min(maxScroll, newScroll)));
+            Content.SetAttribute(NativeAttribute.ScrollPosition, Math.Max(0f, Math.Min(maxScroll, newScroll)));
 
             if(newScroll >= 0f && newScroll <= maxScroll)
             {
@@ -133,21 +188,21 @@ namespace CSX.Skia.Views
             base.OnMouseButtonUp(ev);
         }
 
-        void MoveScrollBarPosition(float offset)
+        public void MoveScrollBarPosition(float offset)
         {
-            var currentScrollPosition = GetScrollPosition();
+            var currentScrollPosition = Content.GetScrollPosition();
             var newScroll = currentScrollPosition - offset;
             var maxScroll = GetMaxScroll();
 
-            SetAttribute(NativeAttribute.ScrollPosition, Math.Max(0f, Math.Min(maxScroll, newScroll)));
+            Content.SetAttribute(NativeAttribute.ScrollPosition, Math.Max(0f, Math.Min(maxScroll, newScroll)));
         }
 
 
 
         public void RenderScrollBar(SKCanvas canvas)
         {
-            var totalContentLenght = GetContentHeight();
-            var maxScroll = totalContentLenght - (YogaNode.LayoutHeight - YogaNode.LayoutPaddingTop - YogaNode.LayoutPaddingBottom - GetBorderTopWidth() - GetBorderBottomWidth());
+            var totalContentLenght = Content.GetContentHeight();
+            var maxScroll = GetMaxScroll();//totalContentLenght - (YogaNode.LayoutHeight - YogaNode.LayoutPaddingTop - YogaNode.LayoutPaddingBottom - GetBorderTopWidth() - GetBorderBottomWidth());
             
             // Dont render the scroll bar if it is not need it
             if(maxScroll < 0)

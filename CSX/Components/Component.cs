@@ -25,7 +25,7 @@ namespace CSX.Components
         public TState State => _state ?? throw new InvalidOperationException("Component has not been initialized");
 
         TProps? _props;
-        public override TProps Props => _props;
+        public override TProps Props => _props ?? throw new InvalidOperationException("Component has no props");
 
         IReadOnlyCollection<IComponent> _children = new IComponent[0];
         public override IReadOnlyCollection<IComponent> Children => _children;
@@ -49,6 +49,11 @@ namespace CSX.Components
 
             _props = props;
             ReRender();            
+        }
+
+        public void RunOnUIThread(Action<double> action, bool forNextFrame = false)
+        {
+            _dom?.RunOnUIThread(action, forNextFrame);
         }
 
         public override void SetChildren(IEnumerable<IComponent> children)

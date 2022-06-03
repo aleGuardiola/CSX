@@ -1,4 +1,5 @@
-﻿using CSX.NativeComponents;
+﻿using CSX.Events;
+using CSX.NativeComponents;
 using CSX.Rendering;
 using CSX.Skia.Events;
 using Facebook.Yoga;
@@ -6,6 +7,7 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Subjects;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,6 +15,10 @@ namespace CSX.Skia.Views
 {
     public abstract class BaseView
     {
+        public Subject<Event> EventFired = new Subject<Event>();
+
+        public uint Deep { get; protected set; } = 1;
+
         public readonly ulong Id;
         public bool IsDirty { get; protected set; } = true;
         public YogaNode YogaNode { get; private set; } = new YogaNode();
@@ -21,23 +27,40 @@ namespace CSX.Skia.Views
 
         public DrawContext DrawContext { get; protected set; }
 
-        public BaseView? Parent { get; internal set; }
+        public View? Parent { get; internal set; }
 
         public BaseView(ulong id)
         {
-            Id = id;
+            Id = id;                  
         }
 
         public void MarkAsSeen()
         {
             IsDirty = false;
+            // YogaNode.MarkLayoutSeen();
+        }
+
+        public void SetDeep(uint deep)
+        {
+            var withParent = (deep + 1);
+            if (withParent > Deep)
+            {
+                Deep = withParent;
+            }
+            Parent?.SetDeep(withParent);
         }
 
         public float TranslatedY { get; protected set; }
         public float TranslatedX { get; protected set; }
 
+        public float RelativeX { get; protected set; }
+        public float RelativeY { get; protected set; }
+
         public float AbsoulteX { get; protected set; }
         public float AbsoluteY { get; protected set; }
+
+        public float LastDrawedWidth { get; protected set; }
+        public float LastDrawedHeight { get; protected set; }
 
         public float X => AbsoulteX + TranslatedX;
         public float Y => AbsoluteY + TranslatedY;
@@ -176,14 +199,17 @@ namespace CSX.Skia.Views
         }
         protected virtual void OnLeftClick(MouseUpEvent ev)
         {
+            EventFired.OnNext(new Event(Id, NativeEvent.Click, new CursorEventArgs(mouseLeftClickPosition.X, mouseLeftClickPosition.Y)));
             ev.MarkAsHandled();
         }
         protected virtual void OnMouseEnter(OnMouseMoveEvent ev)
         {
+            EventFired.OnNext(new Event(Id, NativeEvent.MouseOver, new CursorEventArgs(ev.X, ev.Y)));
             ev.MarkAsHandled();
         }
         protected virtual void OnMouseLeave(OnMouseMoveEvent ev)
         {
+            EventFired.OnNext(new Event(Id, NativeEvent.MouseOut, new CursorEventArgs(ev.X, ev.Y)));
             ev.MarkAsHandled();
         }
 
@@ -270,7 +296,7 @@ namespace CSX.Skia.Views
                     break;
 
                 case NativeAttribute.FlexBasis:
-                    YogaNode.FlexBasis = (float)value;
+                    YogaNode.FlexBasis = ToYogaValue((CSXValue)value);
                     break;
 
                 case NativeAttribute.FlexDirection:
@@ -303,7 +329,7 @@ namespace CSX.Skia.Views
                     break;
 
                 case NativeAttribute.Height:
-                    YogaNode.Height = (float)value;
+                    YogaNode.Height = ToYogaValue((CSXValue)value);
                     break;
 
                 case NativeAttribute.JustifyContent:
@@ -359,19 +385,19 @@ namespace CSX.Skia.Views
                     break;
 
                 case NativeAttribute.MaxHeight:
-                    YogaNode.MaxHeight = (float)value;
+                    YogaNode.MaxHeight = ToYogaValue((CSXValue)value);
                     break;
 
                 case NativeAttribute.MaxWidth:
-                    YogaNode.MaxWidth = (float)value;
+                    YogaNode.MaxWidth = ToYogaValue((CSXValue)value);
                     break;
 
                 case NativeAttribute.MinHeight:
-                    YogaNode.MinHeight = (float)value;
+                    YogaNode.MinHeight = ToYogaValue((CSXValue)value);
                     break;
 
                 case NativeAttribute.MinWidth:
-                    YogaNode.MinWidth = (float)value;
+                    YogaNode.MinWidth = ToYogaValue((CSXValue)value);
                     break;
 
                 case NativeAttribute.Overflow:
@@ -442,7 +468,7 @@ namespace CSX.Skia.Views
                     break;
 
                 case NativeAttribute.Width:
-                    YogaNode.Width = (float)value;
+                    YogaNode.Width = ToYogaValue((CSXValue)value);
                     break;
 
                 case NativeAttribute.BorderBottomWidth:
@@ -471,6 +497,17 @@ namespace CSX.Skia.Views
 
         }
 
+        static YogaValue ToYogaValue(CSXValue value)
+        {
+            return value.Unit switch
+            {
+                CSXUnit.Undefined => YogaValue.Undefined(),
+                CSXUnit.Point => YogaValue.Point(value.Value),
+                CSXUnit.Percent => YogaValue.Percent(value.Value),
+                CSXUnit.Auto => YogaValue.Auto(),
+                _ => throw new NotImplementedException()
+            };
+        }
 
         public virtual void Mesure()
         {
@@ -487,9 +524,24 @@ namespace CSX.Skia.Views
             return YogaNode.IsDirty;
         }
 
+        public bool RectChanged()
+        {
+            if(
+                YogaNode.LayoutX != RelativeX ||
+                YogaNode.LayoutY != RelativeY ||
+                YogaNode.LayoutHeight != LastDrawedHeight ||
+                YogaNode.LayoutWidth != LastDrawedWidth
+                )
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public abstract void CalculateLayout();
 
+        public abstract bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context);        
 
-        public abstract bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context);
     }
 }

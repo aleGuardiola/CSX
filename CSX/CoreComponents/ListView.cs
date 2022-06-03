@@ -32,7 +32,7 @@ namespace CSX.CoreComponents
             var rowHeight = Props.RowHeight;
             var nodePadding = Props.PreRenderCount;
             var itemCount = Props.Data.Length;
-            var viewportHeight = Props.Style?.Height ?? 0;
+            var viewportHeight = Props.Style?.Height.Value.Value ?? 0;
 
             var totalContentHeight = itemCount * rowHeight;
 

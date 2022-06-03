@@ -9,9 +9,12 @@ using System.Threading.Tasks;
 
 namespace CSX.Skia.Views
 {
-    public class Text : View, IViewWithText
+    public class TextNode : BaseView
     {
-        public Text(ulong id) : base(id)
+        string? _lastDrawedText;
+        public string Text { get; set; } = "";
+
+        public TextNode(ulong id) : base(id)
         {
         }
 
@@ -33,12 +36,12 @@ namespace CSX.Skia.Views
                 return new SKColor(color.R, color.G, color.B, color.A);
             }
 
-            return new SKColor(0,0,0, 255);
+            return new SKColor(0, 0, 0, 255);
         }
 
         SKFontStyleWeight GetFontWeight()
         {
-            if(Attributes.TryGetValue(NativeAttribute.FontWeight, out var value))
+            if (Attributes.TryGetValue(NativeAttribute.FontWeight, out var value))
             {
                 var fontWeight = (FontWeight)value;
                 return fontWeight switch
@@ -88,58 +91,6 @@ namespace CSX.Skia.Views
             return result;
         }
 
-        public string TextContent { get; set; } = "";
-        string lastDrawText = "";
-
-        public override bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context)
-        {
-            var x = YogaNode.LayoutX + context.RelativeToX;
-            var y = YogaNode.LayoutY + context.RelativeToY;
-
-            if(!forceDraw && !IsDirty && !YogaNode.HasNewLayout && lastDrawText == TextContent)
-            {
-                return false;
-            }
-
-            base.Draw(canvas, true, level, clipRect, translateY, context);
-
-            using (var paint = GetPaint())
-            {
-                var borderLeftWidth = float.IsNaN(YogaNode.BorderLeftWidth) ? 0 : YogaNode.BorderLeftWidth;
-                var borderToptWidth = float.IsNaN(YogaNode.BorderTopWidth) ? 0 : YogaNode.BorderTopWidth;
-                canvas.DrawText(TextContent, x + YogaNode.LayoutPaddingLeft + borderLeftWidth, y + YogaNode.LayoutPaddingTop + borderToptWidth + YogaNode.LayoutHeight, paint);
-            }
-
-            lastDrawText = TextContent;
-
-            return true;
-        }
-
-        public override bool NeedsToReDraw()
-        {
-            return base.NeedsToReDraw() || lastDrawText != TextContent;
-        }
-
-        public override void Mesure()
-        {
-            using (var paint = GetPaint())
-            {
-                SKRect textBounds = new SKRect();
-                _ = paint.MeasureText(TextContent, ref textBounds);
-
-                if(float.IsNaN(YogaNode.Width.Value))
-                {
-                    YogaNode.Width = textBounds.Width;
-                }
-
-                if (float.IsNaN(YogaNode.Height.Value))
-                {
-                    YogaNode.Height = textBounds.Height;
-                }                
-            }                
-
-        }
-
         SKPaint GetPaint()
         {
             var paint = new SKPaint();
@@ -150,10 +101,60 @@ namespace CSX.Skia.Views
             paint.Color = GetTextColor();
             paint.IsStroke = false;
             paint.Typeface = GetTypeface();
-            
+
 
             return paint;
         }
 
+        public override void CalculateLayout() { }
+
+        public override bool NeedsToReDraw()
+        {
+            return base.NeedsToReDraw() || _lastDrawedText != Text;
+        }
+
+        public override void Mesure()
+        {
+            using (var paint = GetPaint())
+            {
+                SKRect textBounds = new SKRect();
+                _ = paint.MeasureText(Text, ref textBounds);
+
+                if (float.IsNaN(YogaNode.Width.Value))
+                {
+                    YogaNode.Width = textBounds.Width;
+                }
+
+                if (float.IsNaN(YogaNode.Height.Value))
+                {
+                    YogaNode.Height = textBounds.Height;
+                }
+            }
+            base.Mesure();
+        }
+
+        public override bool Draw(SKCanvas canvas, bool forceDraw, int level, SKRect? clipRect, float translateY, DrawContext context)
+        {
+            var x = YogaNode.LayoutX + context.RelativeToX;
+            var y = YogaNode.LayoutY + context.RelativeToY;
+
+            if (!forceDraw && !IsDirty && !YogaNode.HasNewLayout && _lastDrawedText == Text)
+            {
+                return false;
+            }
+
+            using (var paint = GetPaint())
+            {
+                var borderLeftWidth = float.IsNaN(YogaNode.BorderLeftWidth) ? 0 : YogaNode.BorderLeftWidth;
+                var borderToptWidth = float.IsNaN(YogaNode.BorderTopWidth) ? 0 : YogaNode.BorderTopWidth;
+                canvas.DrawText(Text, x + YogaNode.LayoutPaddingLeft + borderLeftWidth, y + YogaNode.LayoutPaddingTop + borderToptWidth + YogaNode.LayoutHeight, paint);
+            }
+
+            YogaNode.MarkLayoutSeen();
+
+            _lastDrawedText = Text;
+
+            return true;
+        }
     }
 }

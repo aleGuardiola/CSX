@@ -12,15 +12,30 @@ namespace CSX.Skia.Views
 {
     public class View : BaseView
     {
-        private List<BaseView> _children = new List<BaseView>();
+        protected List<BaseView> _children = new List<BaseView>();
 
         public View(ulong id) : base(id)
         {
+            
         }
                 
         public IEnumerable<BaseView> Children => _children;
 
-        public void AppendView(BaseView view)
+        public virtual void RemoveWithId(ulong id)
+        {
+            RemoveAt(_children.IndexOf(_children.First(x => x.Id == id)));
+        }
+
+        public virtual void SetChildren(BaseView[] children)
+        {
+            Clear();
+            foreach(var child in children)
+            {
+                AppendView(child);
+            }
+        }
+
+        public virtual void AppendView(BaseView view)
         {
             if(view.Parent != null)
             {
@@ -30,19 +45,21 @@ namespace CSX.Skia.Views
             view.Parent = this;
             _children.Add(view);
             YogaNode.Insert(YogaNode.Count, view.YogaNode);
+            SetDeep(view.Deep);
             IsDirty = true;
         }
 
-        public void RemoveAt(int index)
+        public virtual void RemoveAt(int index)
         {
             var child = _children[index];
             child.Parent = null;
             YogaNode.RemoveAt(index);
             _children.RemoveAt(index);
             IsDirty = true;
+            ComputeDeep();
         }
 
-        public void Clear()
+        public virtual void Clear()
         {
             foreach(var child in _children)
             {
@@ -51,6 +68,20 @@ namespace CSX.Skia.Views
             YogaNode.Clear();
             _children.Clear();
             IsDirty = true;
+            Deep = 1;
+        }
+
+        void ComputeDeep()
+        {
+            uint result = 1;
+            foreach(var child in Children)
+            {
+                if(child.Deep > result)
+                {
+                    result = child.Deep;
+                }
+            }
+            Deep = result;
         }
 
         public SKColor GetBackgroundColor()
@@ -201,7 +232,10 @@ namespace CSX.Skia.Views
                 {
                     return 0f;
                 }
-                return (float)value;
+                var totalContentLenght = GetContentHeight();
+                var maxScroll = totalContentLenght - (YogaNode.LayoutHeight - YogaNode.LayoutPaddingTop - YogaNode.LayoutPaddingBottom - GetBorderTopWidth() - GetBorderBottomWidth());
+
+                return Math.Min((float)value, maxScroll);
             }
 
             return 0f;
@@ -219,10 +253,24 @@ namespace CSX.Skia.Views
             return (lastChild.LayoutY - firstChild.LayoutY) + lastChild.LayoutHeight + firstChild.LayoutMarginTop + lastChild.LayoutMarginBottom;
         }
 
+        public int? GetZIndex()
+        {
+            if (Attributes.TryGetValue(NativeAttribute.ZIndex, out var value))
+            {
+                if(value == null)
+                {
+                    return null;
+                }
+                return (int)value;
+            }
+
+            return null;
+        }
+
         SKPaint _backgroundPaint = new SKPaint()
         {
-            Style = SKPaintStyle.Fill,
-            BlendMode = SKBlendMode.Src
+            Style = SKPaintStyle.Fill,            
+           // BlendMode = SKBlendMode.Src,            
         };
 
         SKPaint _borderTopPaint = new SKPaint()
@@ -287,10 +335,16 @@ namespace CSX.Skia.Views
             bool result = false;
 
             var totalWidth = YogaNode.LayoutWidth;
-            var totalHeight = YogaNode.LayoutHeight;                       
+            var totalHeight = YogaNode.LayoutHeight;
 
-            var x = AbsoulteX = YogaNode.LayoutX + context.RelativeToX;
-            var y = AbsoluteY = YogaNode.LayoutY + context.RelativeToY;
+            LastDrawedWidth = totalWidth;
+            LastDrawedHeight = totalHeight;
+
+            RelativeX = YogaNode.LayoutX;
+            RelativeY = YogaNode.LayoutY;
+
+            var x = AbsoulteX = RelativeX + context.RelativeToX;
+            var y = AbsoluteY = RelativeY + context.RelativeToY;
 
             var newContext = context with { RelativeToX = x, RelativeToY = y };
 
@@ -310,31 +364,35 @@ namespace CSX.Skia.Views
                 x + (totalWidth - borderRight),
                 y + (totalHeight - borderBottom));
 
+            bool childrenChangedRect = false;
+            if(YogaNode.HasNewLayout)
+            {
+                childrenChangedRect = Children.Any(x => x.RectChanged());
+            }
+
             // only draw background when the layout changed
-            if(forceDraw || IsDirty || YogaNode.HasNewLayout)
+            if (forceDraw || IsDirty || (YogaNode.HasNewLayout && childrenChangedRect))
             {
                 result = true;
                 _backgroundPaint.Color = GetBackgroundColor();
                 canvas.DrawRect(contentRect, _backgroundPaint);
-            }            
+
+                if (context.ShowScreenDraws)
+                {
+                    var screnDrawCanvas = context.GetScreenDrawCanvas();
+                    screnDrawCanvas.DrawRect(SKRect.Create(X, Y, YogaNode.LayoutWidth, YogaNode.LayoutHeight), new SKPaint()
+                    {
+                        Color = SKColors.Purple.WithAlpha(125),
+                        Style = SKPaintStyle.Fill
+                    });
+                }
+
+            }
 
             var overflow = GetOverFlow();
             if (overflow == Overflow.Hidden || overflow == Overflow.Scroll)
             {
-                //if (_contentSurface == null)
-                //{
-                //    _contentInfo = new SKImageInfo((int)contentWidth, (int)contentHeight);
-                //    _contentSurface = SKSurface.Create(_contentInfo);
-                //}
-                //else
-                //{
-                //    if (_contentInfo.Width != (int)contentWidth || _contentInfo.Height != (int)contentHeight)
-                //    {
-                //        _contentInfo = new SKImageInfo((int)contentWidth, (int)contentHeight);
-                //        _contentSurface = SKSurface.Create(_contentInfo);
-                //    }
-                //}                
-
+                
                 bool scrollPositionChanged = false;
                 if (lastScrollPosition != scrollPosition)
                 {
@@ -342,45 +400,55 @@ namespace CSX.Skia.Views
                     lastScrollPosition = scrollPosition;
                 }
 
-                //if (overflow == Overflow.Scroll)
-                //{                    
-
-
-                //    //if (scrollPosition * -1 != _contentSurface.Canvas.TotalMatrix.TransY)
-                //    //{
-                //    //    var translation = GetScrollPosition() + _contentSurface.Canvas.TotalMatrix.TransY;
-                //    //    _contentSurface.Canvas.Translate(0f, translation * -1);
-                //    //    scrollPositionChanged = true;
-                //    //}
-                //}
 
                 // offset the content canvas by what this view is currently translated           
-                contentRect.Offset(canvas.TotalMatrix.TransX, canvas.TotalMatrix.TransY);
+                contentRect.Offset(canvas.TotalMatrix.TransX, canvas.TotalMatrix.TransY);                
 
                 // if scroll position changed or the layout changed always draw children
-                if (scrollPositionChanged || YogaNode.HasNewLayout || forceDraw)
+                if (scrollPositionChanged || forceDraw || (YogaNode.HasNewLayout && childrenChangedRect))
                 {
                     result = true;
                     if(childrenCanvas != null)
-                    {                                     
+                    {
                         // clear all layers on top
-                        foreach(var surface in context.Surfaces.Skip(childrenLevel))
+                        foreach (var surface in context.Surfaces.Skip(childrenLevel).Where(x => x != null))
                         {
+                            surface.Canvas.Save();
+                            surface.Canvas.ClipRect(contentRect);
                             surface.Canvas.DrawRect(contentRect, new SKPaint() { BlendMode = SKBlendMode.Clear });
+                            // surface.Canvas.DrawRect(contentRect, new SKPaint() { Color = SKColors.Yellow, StrokeWidth = 2f, Style = SKPaintStyle.Stroke });
                         }
 
-                        childrenCanvas.Save();
-                        childrenCanvas.ClipRect(contentRect);
-                        childrenCanvas.Translate(0f, (scrollPosition * -1) + canvas.TotalMatrix.TransY);
+                        //childrenCanvas.Save();
+                        //childrenCanvas.ClipRect(contentRect);
+                        // childrenCanvas.DrawRect(contentRect, new SKPaint() { Color = SKColors.Black, Style = SKPaintStyle.Stroke, StrokeWidth = 5f });
+                        childrenCanvas.Translate(canvas.TotalMatrix.TransX, (scrollPosition * -1) + canvas.TotalMatrix.TransY);
                         
                         result = true;
                         foreach (var child in Children)
                         {
-                            child.Draw(childrenCanvas, true, childrenLevel, contentRect, scrollPosition, newContext);
-                            child.MarkAsSeen();
+                            if(child is View view && view.GetZIndex() != null)
+                            {
+                                var zindex = view.GetZIndex();
+#pragma warning disable CS8629 // Nullable value type may be null.
+                                var childCanvas = context.GetCanvas(zindex.Value);
+#pragma warning restore CS8629 // Nullable value type may be null.
+                                childCanvas.Translate(canvas.TotalMatrix.TransX, (scrollPosition * -1) + canvas.TotalMatrix.TransY);
+                                child.Draw(childCanvas, true, zindex.Value, contentRect, scrollPosition, newContext);
+                                child.MarkAsSeen();
+                            }
+                            else
+                            {
+                                child.Draw(childrenCanvas, true, childrenLevel, contentRect, scrollPosition, newContext);
+                                child.MarkAsSeen();
+                            }                            
                         }
 
-                        childrenCanvas.Restore();
+                        foreach (var surface in context.Surfaces.Skip(childrenLevel).Where(x => x != null))
+                        {
+                            surface.Canvas.Restore();
+                        }
+                            
                     }
                 }
                 else
@@ -391,10 +459,11 @@ namespace CSX.Skia.Views
 
                         childrenCanvas.Save();
                         childrenCanvas.ClipRect(contentRect);
-                        childrenCanvas.Translate(0f, scrollPosition * -1);
+                        // childrenCanvas.DrawRect(contentRect, new SKPaint() { Color = SKColors.Black, Style = SKPaintStyle.Stroke, StrokeWidth = 5f });
+                        childrenCanvas.Translate(canvas.TotalMatrix.TransX, (scrollPosition * -1) + canvas.TotalMatrix.TransY);
 
                         // draw children
-                        foreach (var child in Children)
+                        foreach (var child in childrenToDraw)
                         {
                             if (child.Draw(childrenCanvas, false, childrenLevel, contentRect, scrollPosition, newContext))
                             {
@@ -527,9 +596,18 @@ namespace CSX.Skia.Views
             //if(clipRect != null)
             //{
             //    canvas.Restore();
-            //}           
+            //}
 
             return result;
+        }
+
+        public override void Mesure()
+        {
+            foreach(var child in Children)
+            {
+                child.Mesure();
+            }
+            base.Mesure();
         }
 
         public override bool NeedsToReDraw()

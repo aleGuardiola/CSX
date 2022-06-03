@@ -1,4 +1,5 @@
-﻿using CSX.Rendering;
+﻿using CSX.NativeComponents;
+using CSX.Rendering;
 using CSX.Skia;
 using CSX.Skia.Events;
 using CSX.Skia.Views;
@@ -19,34 +20,33 @@ namespace CSX.OpenTK.Test
 {
     public class CSXWindow : SkiaWindow
     {
-        BaseView? _root = null;
+        SkiaDom _dom;
 
         ulong _eventId = 1;
 
-        public BaseView? Root 
-        { 
-            get
-            {
-                return _root;
-            }
-            set
-            {
-                if(value == null)
-                {
-                    _root = null;
-                    return;
-                }
-                value.SetAttribute(NativeAttribute.Width, (float)Size.X);
-                value.SetAttribute(NativeAttribute.Height, (float)Size.Y);
-                _root = value;
-            }
-        }
+        public BaseView? Root => _dom.Root;
 
         bool forceDraw = true;        
         DrawContext? context;
 
-        public CSXWindow(GameWindowSettings gameSettings, NativeWindowSettings settings) : base(gameSettings, settings)
+        bool _transparent;
+        bool _showFPS;
+
+        public CSXWindow(SkiaDom dom, GameWindowSettings gameSettings, NativeWindowSettings settings, bool transparent = false, bool showFPS = false) : base(gameSettings, settings)
         {
+            _dom = dom;
+            _transparent = transparent;
+            _showFPS = showFPS;
+        }
+
+        protected override void OnMove(WindowPositionEventArgs e)
+        {
+            unsafe
+            {
+                var monitor = GLFW.GetWindowMonitor(this.WindowPtr);
+            }           
+            
+            base.OnMove(e);
         }
 
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
@@ -88,20 +88,20 @@ namespace CSX.OpenTK.Test
         protected override void OnResize(ResizeEventArgs e)
         {
             forceDraw = true;
-            _root?.SetAttribute(NativeAttribute.Width, (float)e.Width);
-            _root?.SetAttribute(NativeAttribute.Height, (float)e.Height);
+            Root?.SetAttribute(NativeAttribute.Width, (CSXValue)e.Width);
+            Root?.SetAttribute(NativeAttribute.Height, (CSXValue)e.Height);
             base.OnResize(e);
         }
 
         protected override void OnTextInput(TextInputEventArgs e)
         {
-            _root?.OnEvent(new TextInputEvent(GetNewEventId(), e.Unicode));
+            Root?.OnEvent(new TextInputEvent(GetNewEventId(), e.Unicode));
             base.OnTextInput(e);
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
-            if(Root?.YogaNode.IsDirty != null && Root.YogaNode.IsDirty)
+            if (Root?.YogaNode.IsDirty != null && Root.YogaNode.IsDirty)
             {
                 Root.CalculateLayout();
             }
@@ -110,14 +110,20 @@ namespace CSX.OpenTK.Test
 
         public override void OnPaintSurface(SKPaintGLSurfaceEventArgs e, double time)
         {
-            var canvas = e.Surface.Canvas;
+            if(e.Info.Width == 0 || e.Info.Height == 0)
+            {
+                return;
+            }
 
+            var canvas = e.Surface.Canvas;
+            
             if (forceDraw || context == null)
             {                
                 context?.Dispose();
                 context = new DrawContext()
                 {
                     ImageInfo = e.Info,
+                    ShowScreenDraws = false,
                     SurfaceFactory = () =>
                     {
                         return SKSurface.Create(e.Surface.Context, true, e.Info);
@@ -142,33 +148,48 @@ namespace CSX.OpenTK.Test
                             _ => throw new NotImplementedException()
                         };
                     }
-                };
+                };                
             }
 
             if(Root == null)
             {
-                canvas.Clear(SKColors.White);                
+                canvas.Clear(_transparent ? SKColors.Transparent : SKColors.White);
             }
             else
             {
                 if (Root.NeedsToReDraw())
                 {
+                    context.SetDeep(Root.Deep);
                     Root.Draw(context.GetCanvas(0), forceDraw, 0, null, 0f, context);
                     Root.MarkAsSeen();
-                    Root.YogaNode.MarkLayoutSeen();
-
-                    
+                    Root.YogaNode.MarkLayoutSeen();                    
                 }
-                canvas.Clear(SKColors.White);
-                foreach (var surface in context.Surfaces)
+                canvas.Clear(_transparent ? SKColors.Transparent : SKColors.White);
+                foreach (var surface in context.Surfaces.Where(x => x != null))
                 {
                     canvas.DrawSurface(surface, 0, 0);
                 }
+                if(context.ScreenDrawsSurface != null)
+                {
+                    canvas.DrawSurface(context.ScreenDrawsSurface, 0, 0);
+                    context.ScreenDrawsSurface.Canvas.Clear();
+                }
+
                 Root.OnEvent(new FrameDrawEvent(GetNewEventId(), time));
+                _dom.OnFrame(time);
             }
 
-            Console.Clear();
-            Console.WriteLine($"Frame Time: {time}ms,  FPS: {1.0 / time}");
+            if(_showFPS)
+            {
+                canvas.DrawText($"FPS: {(int)(1.0 / time)}", new SKPoint(10, 10), new SKPaint()
+                {
+                    Color = SKColors.Red,                    
+                });
+            }
+
+            //Console.Clear();
+            //Console.WriteLine($"Frame Time: {time * 1000}ms");
+            //Console.WriteLine($"FPS: {1.0 / time}");
 
             forceDraw = false;
         }

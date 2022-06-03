@@ -25,7 +25,12 @@ namespace CSX.Rendering
         
         bool SupportAppendingDom();
         void AppendDom(IDOM dom);
-        IDOM CreateNewMemoryDom();        
+        IDOM CreateNewMemoryDom();   
+        void RunOnUIThread(Action<double> action, bool forNextFrame = false)
+        {
+            double deltaTime = 33;
+            Task.Delay((int)deltaTime).ContinueWith((t) => action(deltaTime));            
+        }
     }   
 
 }
