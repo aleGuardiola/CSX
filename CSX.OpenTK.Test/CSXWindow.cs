@@ -8,13 +8,6 @@ using OpenTK.Windowing.Common.Input;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CSX.OpenTK.Test
 {
@@ -37,6 +30,7 @@ namespace CSX.OpenTK.Test
             _dom = dom;
             _transparent = transparent;
             _showFPS = showFPS;
+            VSync = VSyncMode.Adaptive;
         }
 
         protected override void OnMove(WindowPositionEventArgs e)
@@ -186,10 +180,6 @@ namespace CSX.OpenTK.Test
                     Color = SKColors.Red,                    
                 });
             }
-
-            //Console.Clear();
-            //Console.WriteLine($"Frame Time: {time * 1000}ms");
-            //Console.WriteLine($"FPS: {1.0 / time}");
 
             forceDraw = false;
         }
