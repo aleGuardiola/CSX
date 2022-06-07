@@ -1,6 +1,8 @@
-﻿using CSX.Skia.Rendering.Drawing;
+﻿using CSX.Skia.Rendering.Graphic;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,26 +11,16 @@ namespace CSX.Skia.Rendering.Render
 {
     public abstract class RenderElement
     {
-        public float X { get; init; }
-        public float Y { get; init; }
-        public int ZIndex { get; init; }
+        public SKRect Rect { get; init; }
+        
+        // TODO filter
+        // TODO reflection
 
-        public Transform Transform { get; init; }
-
-        public RenderElement? Parent { get; init; }
-
-        public RenderElement[] Children { get; init; }
-
-        public RenderElement(float x, float y, int zIndex, Transform transform, RenderElement[] children, RenderElement? parent)
+        public RenderElement(SKRect rect)
         {
-            X = x;
-            Y = y;
-            ZIndex = zIndex;
-            Children = children;
-            Transform = transform;
-            Parent = parent;
+            Rect = rect;
         }
 
-        public abstract void Draw(DrawingContext context);
+        public abstract void Paint(GraphicContext context);
     }
 }
